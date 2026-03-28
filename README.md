@@ -34,8 +34,10 @@ pip install -r requirements.txt
 Download and install **com0com**:
 1. Go to https://sourceforge.net/projects/com0com/
 2. Install the latest stable release
-3. Run `DevCon.exe` to create a virtual port pair (e.g., COM1 ↔ COM2)
-4. Configure LabVIEW to connect to one port; the emulator will connect to the other
+3. Run `DevCon.exe` to create a virtual port pair (e.g., COM3 ↔ COM4)
+   - Emulator connects to COM3
+   - LabVIEW connects to COM4
+4. Configure LabVIEW serial settings to COM4 (115200 baud, 8 data bits, no parity)
 
 ### 3. Verify Setup
 
@@ -43,29 +45,57 @@ Download and install **com0com**:
 python src/main.py --help
 ```
 
-## Usage
+## Usage: Two-Terminal Workflow
 
-### Starting the Emulator
-
-```bash
-python src/main.py --port COM3 --config Machine\ Interface\ Parameters.json
-```
-
-### Running Tests
+### Terminal 1: Start Emulator (Backend Daemon)
 
 ```bash
-# Unit tests
-pytest tests/
+# Basic startup (silently runs, logs to logs/ directory)
+python3 firmware_emulator/src/main.py --port COM3
 
-# Integration test (emulator must be running)
-python tests/integration_test.py
+# With verbose output (see real-time commands/responses)
+python3 firmware_emulator/src/main.py --port COM3 --verbose
+
+# With hex protocol dump
+python3 firmware_emulator/src/main.py --port COM3 --hex
+
+# With debug breakpoints on specific opcodes
+python3 firmware_emulator/src/main.py --port COM3 --debug tpGOP LCS01
 ```
 
-### LabVIEW Integration
+### Terminal 2: Launch LabVIEW
 
-1. Connect LabVIEW serial port to the virtual COM port (paired with emulator port)
-2. Send `QUERY` → emulator responds `YES`
-3. All subsequent commands follow the protocol defined in Machine Interface Parameters.json
+```bash
+# Open LabVIEW IDE or run compiled application
+labview &
+
+# In LabVIEW:
+# 1. Configure serial port to COM4 (paired with emulator's COM3)
+# 2. Click "Connect" or "Initialize Hardware"
+# 3. App sends QUERY → emulator responds YES
+# 4. Full communication begins automatically
+```
+
+### Monitoring Output Example
+
+**Terminal 1 with --verbose:**
+```
+[2026-03-28 07:53:25.123] RECV: QUERY         → SEND: YES
+[2026-03-28 07:53:26.045] RECV: tpGOP         → SEND: tpGOR [2000ms delay]
+[2026-03-28 07:53:28.067] RECV: tpGCL         → SEND: tpGCR
+[2026-03-28 07:53:28.234] RECV: LCS01         → CAMERA TRIGGER [id=0]
+[2026-03-28 07:53:28.235] RECV: TSENB         → TIMESTAMP ENABLED
+[2026-03-28 07:53:28.300] RECV: tpLSC         → SEND: tpOL1
+```
+
+**Logs Directory (automatic):**
+```
+logs/
+├── emulator_20260328_075325.log     # Main events (startup, errors)
+├── serial_20260328_075325.log       # Serial port events
+├── commands_20260328_075325.log     # Every command with state before/after
+└── debug_20260328_075325.log        # Detailed DEBUG-level messages
+```
 
 ## Architecture
 
