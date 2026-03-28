@@ -4,9 +4,13 @@ Tracks the complete state of the simulated hardware
 """
 
 from enum import Enum
-from dataclasses import dataclass
-from typing import Dict, List
+from dataclasses import dataclass, asdict
+from typing import Dict, List, Any
 import time
+import json
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class GuidePosition(Enum):
@@ -140,11 +144,71 @@ class DeviceState:
     def reset(self):
         """Reset device to initial state"""
         self.__init__()
+        logger.info("Device state reset to initial values")
 
     def log_command(self, command: str):
         """Track last command received"""
         self.last_command = command
         self.last_command_time = time.time()
+        logger.debug(f"Command logged: {command}")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serialize device state to dictionary.
+        
+        Returns:
+            Dictionary representation of device state
+        """
+        return {
+            'guide_top': asdict(self.guide_top),
+            'guide_bottom': asdict(self.guide_bottom),
+            'reeler_top': asdict(self.reeler_top),
+            'reeler_bottom': asdict(self.reeler_bottom),
+            'sensor_top': asdict(self.sensor_top),
+            'sensor_bottom': asdict(self.sensor_bottom),
+            'encoder_top': asdict(self.encoder_top),
+            'encoder_bottom': asdict(self.encoder_bottom),
+            'lamps': asdict(self.lamps),
+            'cameras': {
+                'flags': self.cameras.flags,
+                'active_sequence': self.cameras.active_sequence,
+                'timestamp_enabled': self.cameras.timestamp_enabled,
+            },
+            'door_locked': self.door_locked,
+            'estop_pressed': self.estop_pressed,
+            'power_on': self.power_on,
+            'sag_top_upper': self.sag_top_upper,
+            'sag_top_lower': self.sag_top_lower,
+            'sag_bottom_upper': self.sag_bottom_upper,
+            'sag_bottom_lower': self.sag_bottom_lower,
+            'solenoid_top': self.solenoid_top,
+            'solenoid_bottom': self.solenoid_bottom,
+            'stamping_relay': self.stamping_relay,
+            'stepper_initialized': self.stepper_initialized,
+            'reeler_initialized': self.reeler_initialized,
+            'last_command': self.last_command,
+            'last_command_time': self.last_command_time,
+        }
+
+    def to_json(self) -> str:
+        """
+        Serialize device state to JSON string.
+        
+        Returns:
+            JSON representation of device state
+        """
+        state_dict = self.to_dict()
+        # Convert enum values to strings for JSON serialization
+        def convert_enums(obj):
+            if isinstance(obj, Enum):
+                return obj.value
+            elif isinstance(obj, dict):
+                return {k: convert_enums(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_enums(item) for item in obj]
+            return obj
+        
+        return json.dumps(convert_enums(state_dict), indent=2, default=str)
 
     def __repr__(self):
         return (
