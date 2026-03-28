@@ -10,6 +10,7 @@ from .src import (
     DebugBreakpoint,
     InteractiveMonitor,
     OpcodeParser,
+    OpcodeHandler,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     'DebugBreakpoint',
     'InteractiveMonitor',
     'OpcodeParser',
+    'OpcodeHandler',
 ]
