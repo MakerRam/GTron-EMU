@@ -4,7 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from firmware_emulator.src import (
+from firmware_emulator import (
     get_logger,
     MachineConfig,
     SerialMonitor,
@@ -109,6 +109,14 @@ def main():
     # TODO: Initialize OpcodeHandler (Group 3)
     # TODO: Initialize EmulatorEngine (Group 10)
     # TODO: Start main event loop
+    
+    # If --interactive flag, start interactive monitor (Phase 1 stub)
+    if args.interactive:
+        from firmware_emulator import InteractiveMonitor
+        interactive = InteractiveMonitor(logger)
+        interactive.start()
+        # Phase 1: Returns immediately after help message
+        # Phase 2: Would loop until user types 'exit'
     
     if args.verbose:
         print(f"[STARTUP] Emulator started on {args.port}")
