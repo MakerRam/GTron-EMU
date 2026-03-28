@@ -7,6 +7,7 @@ __author__ = "OpenCode"
 from .logging_config import get_logger, setup_root_logger
 from .config_parser import MachineConfig, DelayConfig, TimeoutConfig, LightCameraTimings
 from .debug_breakpoint import DebugBreakpoint
+from .interactive_monitor import InteractiveMonitor
 
 __all__ = [
     'get_logger',
@@ -16,4 +17,5 @@ __all__ = [
     'TimeoutConfig',
     'LightCameraTimings',
     'DebugBreakpoint',
+    'InteractiveMonitor',
 ]
