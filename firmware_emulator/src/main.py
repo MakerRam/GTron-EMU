@@ -7,6 +7,7 @@ from pathlib import Path
 from firmware_emulator import (
     get_logger,
     MachineConfig,
+    SerialMonitor,
 )
 
 
@@ -95,7 +96,15 @@ def main():
         logger.error(f"Failed to load configuration: {e}")
         sys.exit(1)
     
-    # TODO: Initialize SerialMonitor (Group 0.5 Task 1-3)
+    # Setup serial monitor
+    monitor = SerialMonitor(
+        logger=logger,
+        enable_verbose=args.verbose,
+        enable_hex=args.hex,
+    )
+    
+    logger.info("Serial monitor initialized")
+    
     # TODO: Initialize SerialBridge (Group 9)
     # TODO: Initialize OpcodeHandler (Group 3)
     # TODO: Initialize EmulatorEngine (Group 10)
