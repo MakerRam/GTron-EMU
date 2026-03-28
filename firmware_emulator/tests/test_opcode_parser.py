@@ -32,21 +32,6 @@ def test_parser_valid_command_5_bytes():
     assert params is None
 
 
-def test_parser_command_with_numeric_params():
-    """Test parsing command with numeric parameters."""
-    config = MagicMock(spec=MachineConfig)
-    config.is_valid_opcode.return_value = True
-    logger = MagicMock()
-    
-    parser = OpcodeParser(config, logger)
-    
-    data = b"tpGOP"
-    opcode, params = parser.parse(data)
-    
-    assert opcode == "tpGOP"
-    assert params is None  # Phase 1: no parameter extraction
-
-
 def test_parser_invalid_command_too_short():
     """Test parsing fails for commands less than 5 bytes."""
     config = MagicMock(spec=MachineConfig)
@@ -111,22 +96,6 @@ def test_parser_case_sensitivity():
         parser.parse(b"query")
 
 
-def test_parser_extract_params_no_params():
-    """Test extracting params when command has no parameters."""
-    command_str = "QUERY"
-    params = OpcodeParser.extract_params(command_str)
-    
-    assert params is None
-
-
-def test_parser_extract_params_with_encoding():
-    """Test extracting params from encoded command format."""
-    command_str = "tpGOP"
-    params = OpcodeParser.extract_params(command_str)
-    
-    assert params is None  # Phase 1: returns None
-
-
 def test_parser_validate_opcode():
     """Test validate_opcode() returns True for registered opcodes."""
     config = MagicMock(spec=MachineConfig)
@@ -147,3 +116,35 @@ def test_parser_validate_opcode_invalid():
     parser = OpcodeParser(config, logger)
     
     assert parser.validate_opcode("XXXXX") is False
+
+
+def test_parser_extract_params_no_params():
+    """Test extracting params when command has no parameters."""
+    command_str = "QUERY"
+    params = OpcodeParser.extract_params(command_str)
+    
+    assert params is None
+
+
+def test_parser_command_with_numeric_params():
+    """Test parsing command with numeric parameters."""
+    config = MagicMock(spec=MachineConfig)
+    config.is_valid_opcode.return_value = True
+    logger = MagicMock()
+    
+    parser = OpcodeParser(config, logger)
+    data = b"tpGOP"
+    
+    opcode, params = parser.parse(data)
+    
+    assert opcode == "tpGOP"
+    assert params is None  # Phase 1: no parameter extraction
+
+
+def test_parser_extract_params_with_encoding():
+    """Test extracting params from encoded command format."""
+    command_str = "tpGOP"
+    params = OpcodeParser.extract_params(command_str)
+    
+    # Phase 1: Returns None
+    assert params is None

@@ -142,15 +142,13 @@ def test_handler_handler_signature():
     handler = OpcodeHandler(logger)
     state = DeviceState()
     
-    # Get a handler and verify it returns the right structure
     query_handler = handler.get_handler("QUERY")
     result = query_handler(state)
     
     assert isinstance(result, tuple)
     assert len(result) == 2
-    response, new_state = result
-    assert isinstance(response, str)
-    assert isinstance(new_state, DeviceState)
+    assert isinstance(result[0], str)
+    assert isinstance(result[1], DeviceState)
 
 
 def test_handler_state_immutability():
@@ -158,12 +156,11 @@ def test_handler_state_immutability():
     logger = MagicMock()
     handler = OpcodeHandler(logger)
     state = DeviceState()
-    original_id = id(state)
     
+    original_state = state
     response, new_state = handler.dispatch("QUERY", state)
     
-    # Built-in handlers return the same state, which is fine for Phase 1
-    assert id(new_state) == original_id
+    assert new_state is original_state  # Same object (immutable in Phase 1)
 
 
 def test_handler_error_handling():
@@ -181,7 +178,7 @@ def test_handler_error_handling():
         handler.dispatch("ERROR", state)
 
 
-def test_handler_dispatch_multiple():
+def test_handler_multiple_dispatch():
     """Test dispatching multiple different opcodes."""
     logger = MagicMock()
     handler = OpcodeHandler(logger)
