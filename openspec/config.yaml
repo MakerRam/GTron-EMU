@@ -1,0 +1,34 @@
+schema: spec-driven
+
+# Project context
+context: |
+  Tech stack: Python 3.12.3, pyserial, pytest
+  Conventions: TDD (test-first), git commit per task, parallel worktree execution
+  Domain: Automotive firmware emulator for GTRON vision system (in-line gauging)
+  Architecture: Backend daemon (no UI), state machine, immutable state pattern
+  Execution Model: Virtual COM port (9600 baud, 5-byte ASCII protocol)
+  Phase 1 Scope: 110 tasks, Top Rack only (3 cameras), config-driven design
+
+# Per-artifact rules
+rules:
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Each task = 1 git commit with TDD process (test first, then implement)
+    - Use parallel worktrees with subagent-driven-development for independent tasks
+    - Mark task complete in tasks.md ONLY after:
+      * Tests pass (automated verification)
+      * Code committed to git
+      * All acceptance criteria met
+  proposal:
+    - Include Phase 1 scope (110 tasks, 60-75 hours estimated)
+    - Mention two-terminal workflow (Emulator terminal + LabVIEW IDE terminal)
+    - Reference design documents in docs/
+  design:
+    - Reference architecture in docs/ARCHITECTURE_DIAGRAM.md
+    - Include state machine diagram (24 state keys)
+    - Document 3-level logging/monitoring approach
+    - Show immutable state pattern examples
+  spec:
+    - Link to firmware reference (TimeMachine_V4.2/*.ino files)
+    - Include protocol examples (5-byte ASCII commands)
+    - Show state transitions for each capability
