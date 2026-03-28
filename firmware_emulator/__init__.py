@@ -6,7 +6,9 @@ from .src import (
     DelayConfig,
     TimeoutConfig,
     LightCameraTimings,
+    SerialMonitor,
     DebugBreakpoint,
+    InteractiveMonitor,
 )
 
 __all__ = [
@@ -16,5 +18,7 @@ __all__ = [
     'DelayConfig',
     'TimeoutConfig',
     'LightCameraTimings',
+    'SerialMonitor',
     'DebugBreakpoint',
+    'InteractiveMonitor',
 ]
