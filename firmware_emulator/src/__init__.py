@@ -9,6 +9,7 @@ from .config_parser import MachineConfig, DelayConfig, TimeoutConfig, LightCamer
 from .serial_monitor import SerialMonitor
 from .debug_breakpoint import DebugBreakpoint
 from .interactive_monitor import InteractiveMonitor
+from .opcode_handler import OpcodeHandler
 
 __all__ = [
     'get_logger',
@@ -20,4 +21,5 @@ __all__ = [
     'SerialMonitor',
     'DebugBreakpoint',
     'InteractiveMonitor',
+    'OpcodeHandler',
 ]
