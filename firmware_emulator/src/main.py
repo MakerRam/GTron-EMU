@@ -1,128 +1,126 @@
-"""Main entry point for firmware emulator."""
-import sys
+"""Main emulator entry point and event loop"""
+
 import argparse
 import logging
+import sys
 from pathlib import Path
+from firmware_emulator.src.serial_bridge import SerialBridge
+from firmware_emulator.src.command_parser import CommandParser
+from firmware_emulator.src.opcode_handlers import OpcodeDispatcher
+from firmware_emulator.src.logging_config import setup_logging
 
-from firmware_emulator import (
-    get_logger,
-    MachineConfig,
-    SerialMonitor,
-)
+logger = logging.getLogger(__name__)
 
-
-def create_parser() -> argparse.ArgumentParser:
-    """Create and return argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="firmware_emulator",
-        description="GTRON Vision System Firmware Emulator - Virtual COM port backend daemon",
-        epilog="""
-Examples:
-  python3 src/main.py --port COM3
-  python3 src/main.py --port COM3 --verbose
-  python3 src/main.py --port COM3 --verbose --hex
-  python3 src/main.py --port COM3 --config /path/to/config.json --debug
-        """,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
+class EmulatorEngine:
+    """Main event loop for firmware emulator"""
     
-    parser.add_argument(
-        "--port",
-        required=True,
-        type=str,
-        help="Virtual COM port to listen on (e.g., COM3, /dev/ttyS0)",
-    )
+    def __init__(self, port: str, baudrate: int = 9600, timeout: float = 1.0, verbose: bool = False, hex_output: bool = False):
+        """Initialize emulator engine."""
+        self.port = port
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.verbose = verbose
+        self.hex_output = hex_output
+        
+        try:
+            self.serial_bridge = SerialBridge(port=port, baudrate=baudrate, timeout=timeout)
+        except Exception as e:
+            logger.error(f"Failed to initialize serial bridge: {e}")
+            raise
+        
+        self.dispatcher = OpcodeDispatcher()
+        self.running = False
+        logger.info(f"Emulator engine initialized on {port}")
     
-    parser.add_argument(
-        "--config",
-        type=str,
-        default="Machine Interface Parameters.json",
-        help="Path to Machine Interface Parameters.json (default: ./Machine Interface Parameters.json)",
-    )
+    def _process_command(self, cmd_bytes: bytes) -> bytes:
+        """Process received command."""
+        if not CommandParser.is_valid_command(cmd_bytes):
+            logger.warning(f"Invalid command format: {cmd_bytes}")
+            return b'FLS'
+        
+        opcode = CommandParser.parse(cmd_bytes)
+        response = self.dispatcher.dispatch(opcode)
+        
+        return response
     
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        default=False,
-        help="Enable human-readable console output (Level 1 monitoring)",
-    )
+    def _log_transaction(self, cmd_bytes: bytes, response: bytes):
+        """Log command/response transaction."""
+        opcode = CommandParser.parse(cmd_bytes) if CommandParser.is_valid_command(cmd_bytes) else "???"
+        
+        if self.hex_output:
+            cmd_hex = ' '.join(f'{b:02X}' for b in cmd_bytes)
+            resp_hex = ' '.join(f'{b:02X}' for b in response)
+            msg = f"RECV: [{cmd_hex}] → SEND: [{resp_hex}]"
+        else:
+            cmd_str = cmd_bytes.decode('ascii', errors='replace')
+            resp_str = response.decode('ascii', errors='replace')
+            msg = f"RECV: {cmd_str} → SEND: {resp_str}"
+        
+        if self.verbose:
+            print(f"[{opcode}] {msg}")
+        
+        logger.info(msg)
     
-    parser.add_argument(
-        "--hex",
-        action="store_true",
-        default=False,
-        help="Enable hex dump output (Level 2 monitoring)",
-    )
+    def run(self):
+        """Start main event loop"""
+        logger.info("=== Emulator Started ===")
+        print(f"Emulator running on {self.port} at {self.baudrate} baud")
+        print("Waiting for commands... (Ctrl+C to stop)")
+        
+        self.running = True
+        try:
+            while self.running:
+                cmd_bytes = self.serial_bridge.read_command()
+                
+                if cmd_bytes is not None:
+                    response = self._process_command(cmd_bytes)
+                    
+                    if self.serial_bridge.write_response(response):
+                        self._log_transaction(cmd_bytes, response)
+                    else:
+                        logger.error("Failed to send response")
+        
+        except KeyboardInterrupt:
+            logger.info("Shutdown signal received (Ctrl+C)")
+            print("\nShutting down...")
+        
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}", exc_info=True)
+        
+        finally:
+            self.stop()
     
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        default=False,
-        help="Enable debug mode with breakpoints (Phase 1: warnings, Phase 2: pauses)",
-    )
-    
-    parser.add_argument(
-        "--interactive",
-        action="store_true",
-        default=False,
-        help="Enable interactive REPL console (Phase 1: stub, Phase 2: full)",
-    )
-    
-    return parser
-
+    def stop(self):
+        """Stop the emulator and cleanup"""
+        self.running = False
+        self.serial_bridge.close()
+        logger.info("=== Emulator Stopped ===")
 
 def main():
-    """Main entry point."""
-    parser = create_parser()
+    """Entry point for emulator"""
+    parser = argparse.ArgumentParser(description="Vision System Firmware Emulator")
+    parser.add_argument('--port', required=True, help='Serial port (e.g., COM3)')
+    parser.add_argument('--baudrate', type=int, default=9600, help='Baud rate (default 9600)')
+    parser.add_argument('--verbose', action='store_true', help='Print human-readable commands')
+    parser.add_argument('--hex', action='store_true', dest='hex_output', help='Print hex bytes instead of ASCII')
+    parser.add_argument('--debug', nargs='*', default=[], help='Debug breakpoint opcodes (Phase 2)')
+    parser.add_argument('--interactive', action='store_true', help='Interactive monitor mode (Phase 2)')
+    
     args = parser.parse_args()
     
     # Setup logging
-    logger = get_logger("emulator")
-    logger.info("=" * 80)
-    logger.info("GTRON Vision System Firmware Emulator - Phase 1")
-    logger.info("=" * 80)
-    logger.info(f"Port: {args.port}")
-    logger.info(f"Config: {args.config}")
-    logger.info(f"Verbose: {args.verbose}, Hex: {args.hex}, Debug: {args.debug}, Interactive: {args.interactive}")
+    setup_logging()
     
-    # Load configuration
+    # Create and run emulator
+    engine = EmulatorEngine(port=args.port, verbose=args.verbose, hex_output=args.hex_output)
+    
+    logger.info(f"Command line args: {args}")
+    
     try:
-        config = MachineConfig(args.config)
-        logger.info(f"Loaded configuration with {len(config.opcodes)} opcodes")
-    except FileNotFoundError as e:
-        logger.error(f"Configuration file not found: {args.config}")
-        sys.exit(1)
+        engine.run()
     except Exception as e:
-        logger.error(f"Failed to load configuration: {e}")
+        logger.error(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)
-    
-    # Setup serial monitor
-    monitor = SerialMonitor(
-        logger=logger,
-        enable_verbose=args.verbose,
-        enable_hex=args.hex,
-    )
-    
-    logger.info("Serial monitor initialized")
-    
-    # TODO: Initialize SerialBridge (Group 9)
-    # TODO: Initialize OpcodeHandler (Group 3)
-    # TODO: Initialize EmulatorEngine (Group 10)
-    # TODO: Start main event loop
-    
-    # If --interactive flag, start interactive monitor (Phase 1 stub)
-    if args.interactive:
-        from firmware_emulator import InteractiveMonitor
-        interactive = InteractiveMonitor(logger)
-        interactive.start()
-        # Phase 1: Returns immediately after help message
-        # Phase 2: Would loop until user types 'exit'
-    
-    if args.verbose:
-        print(f"[STARTUP] Emulator started on {args.port}")
-        print(f"[STARTUP] Configuration loaded from {args.config}")
-        print(f"[STARTUP] Waiting for LabVIEW connection...")
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
