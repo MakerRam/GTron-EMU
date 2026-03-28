@@ -113,6 +113,11 @@ def setup_root_logger(level=logging.DEBUG):
     root_logger.addHandler(console_handler)
 
 
+def setup_logging(level=logging.DEBUG):
+    """Alias for setup_root_logger for consistency"""
+    return setup_root_logger(level)
+
+
 # Module-specific loggers
 MAIN_LOGGER = get_logger("emulator.main")
 SERIAL_LOGGER = get_logger("emulator.serial")
