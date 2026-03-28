@@ -8,7 +8,7 @@ from dataclasses import dataclass, asdict
 from typing import Dict, List, Any
 import time
 import json
-from logging_config import get_logger
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 

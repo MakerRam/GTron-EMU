@@ -6,7 +6,7 @@ import json
 import os
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-from logging_config import get_logger
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 
