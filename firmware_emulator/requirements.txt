@@ -1,0 +1,4 @@
+pyserial
+flask
+flask-cors
+pytest

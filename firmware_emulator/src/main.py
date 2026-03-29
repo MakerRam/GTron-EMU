@@ -9,6 +9,8 @@ from firmware_emulator.src.command_parser import CommandParser
 from firmware_emulator.src.opcode_handler import OpcodeHandler
 from firmware_emulator.src.device_state import DeviceState
 from firmware_emulator.src.logging_config import setup_logging
+from firmware_emulator.src.state_export import StateExporter
+from firmware_emulator.src.api_server import APIServer
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ class EmulatorEngine:
     """Main event loop for firmware emulator"""
     
     def __init__(self, port: str, baudrate: int = 115200, timeout: float = 1.0, verbose: bool = False, hex_output: bool = False,
-                 rtscts: bool = False, dsrdtr: bool = False, xonxoff: bool = False):
+                 rtscts: bool = False, dsrdtr: bool = False, xonxoff: bool = False, api_port: int = 5000, enable_api: bool = True):
         """Initialize emulator engine."""
         self.port = port
         self.baudrate = baudrate
@@ -34,6 +36,14 @@ class EmulatorEngine:
         self.opcode_handler = OpcodeHandler(logger)
         self.device_state = DeviceState()
         self.running = False
+        
+        # Initialize state exporter and API server
+        self.state_exporter = StateExporter(self.device_state)
+        self.api_server = None
+        self.enable_api = enable_api
+        if enable_api:
+            self.api_server = APIServer(self.state_exporter, port=api_port)
+        
         logger.info(f"Emulator engine initialized on {port}")
     
     def _process_command(self, cmd_bytes: bytes) -> bytes:
@@ -83,6 +93,12 @@ class EmulatorEngine:
         """Start main event loop"""
         logger.info("=== Emulator Started ===")
         print(f"Emulator running on {self.port} at {self.baudrate} baud")
+        
+        # Start API server if enabled
+        if self.enable_api and self.api_server:
+            self.api_server.start()
+            print(f"API server started on http://localhost:{self.api_server._port}")
+        
         print("Waiting for commands... (Ctrl+C to stop)")
         
         self.running = True
@@ -124,6 +140,8 @@ def main():
     parser.add_argument('--rtscts', action='store_true', help='Enable RTS/CTS flow control')
     parser.add_argument('--dsrdtr', action='store_true', help='Enable DSR/DTR flow control')
     parser.add_argument('--xonxoff', action='store_true', help='Enable XON/XOFF flow control')
+    parser.add_argument('--api-port', type=int, default=5000, help='API server port (default 5000)')
+    parser.add_argument('--no-api', action='store_true', help='Disable HTTP API server')
     parser.add_argument('--debug', nargs='*', default=[], help='Debug breakpoint opcodes (Phase 2)')
     parser.add_argument('--interactive', action='store_true', help='Interactive monitor mode (Phase 2)')
     
@@ -134,7 +152,8 @@ def main():
     
     # Create and run emulator
     engine = EmulatorEngine(port=args.port, baudrate=args.baudrate, verbose=args.verbose, hex_output=args.hex_output,
-                           rtscts=args.rtscts, dsrdtr=args.dsrdtr, xonxoff=args.xonxoff)
+                           rtscts=args.rtscts, dsrdtr=args.dsrdtr, xonxoff=args.xonxoff,
+                           api_port=args.api_port, enable_api=not args.no_api)
     
     logger.info(f"Command line args: {args}")
     

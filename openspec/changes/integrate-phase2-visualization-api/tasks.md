@@ -1,38 +1,38 @@
 ## 1. API Layer Implementation
 
-- [ ] 1.1 Copy state_export.py from Test-repository to firmware_emulator/src/
-- [ ] 1.2 Copy api_server.py from Test-repository to firmware_emulator/src/
-- [ ] 1.3 Update imports in state_export.py: `from device_state import` → `from firmware_emulator.src.device_state import`
-- [ ] 1.4 Update imports in api_server.py: `from state_export import` → `from firmware_emulator.src.state_export import`
-- [ ] 1.5 Create firmware_emulator/requirements.txt with: pyserial, flask, flask-cors, pytest
-- [ ] 1.6 Run `pip install -r firmware_emulator/requirements.txt` to verify dependencies install
+- [x] 1.1 Copy state_export.py from Test-repository to firmware_emulator/src/
+- [x] 1.2 Copy api_server.py from Test-repository to firmware_emulator/src/
+- [x] 1.3 Update imports in state_export.py: `from device_state import` → `from firmware_emulator.src.device_state import`
+- [x] 1.4 Update imports in api_server.py: `from state_export import` → `from firmware_emulator.src.state_export import`
+- [x] 1.5 Create firmware_emulator/requirements.txt with: pyserial, flask, flask-cors, pytest
+- [x] 1.6 Run `pip install -r firmware_emulator/requirements.txt` to verify dependencies install
 
 ## 2. Emulator Integration
 
-- [ ] 2.1 Modify firmware_emulator/src/main.py to import StateExporter and APIServer
-- [ ] 2.2 Add StateExporter instantiation in EmulatorEngine.__init__ (after dispatcher)
-- [ ] 2.3 Add APIServer instantiation in EmulatorEngine.__init__ with port parameter
-- [ ] 2.4 Ensure API server starts in background thread (already handled by APIServer.start())
-- [ ] 2.5 Add command-line argument parsing for --api-port (optional, default 5000)
-- [ ] 2.6 Add command-line argument parsing for --no-api flag (optional, disables API)
-- [ ] 2.7 Update console output to show "API server started on port X" when enable_api=True
+- [x] 2.1 Modify firmware_emulator/src/main.py to import StateExporter and APIServer
+- [x] 2.2 Add StateExporter instantiation in EmulatorEngine.__init__ (after dispatcher)
+- [x] 2.3 Add APIServer instantiation in EmulatorEngine.__init__ with port parameter
+- [x] 2.4 Ensure API server starts in background thread (already handled by APIServer.start())
+- [x] 2.5 Add command-line argument parsing for --api-port (optional, default 5000)
+- [x] 2.6 Add command-line argument parsing for --no-api flag (optional, disables API)
+- [x] 2.7 Update console output to show "API server started on port X" when enable_api=True
 
 ## 3. Testing - Existing Test Suite
 
-- [ ] 3.1 Run `pytest firmware_emulator/tests/test_device_state.py -v` (verify 100% pass)
-- [ ] 3.2 Run `pytest firmware_emulator/tests/test_command_parser.py -v` (verify 100% pass)
-- [ ] 3.3 Run `pytest firmware_emulator/tests/test_opcode_dispatcher.py -v` (verify 100% pass)
-- [ ] 3.4 Run `pytest firmware_emulator/tests/ -v` (full suite, must all pass)
-- [ ] 3.5 Document test results (count, any failures, timing)
+- [x] 3.1 Run `pytest firmware_emulator/tests/test_device_state.py -v` (verify 100% pass)
+- [x] 3.2 Run `pytest firmware_emulator/tests/test_command_parser.py -v` (verify 100% pass)
+- [x] 3.3 Run `pytest firmware_emulator/tests/test_opcode_dispatcher.py -v` (verify 100% pass)
+- [x] 3.4 Run `pytest firmware_emulator/tests/ -v` (full suite, must all pass)
+- [x] 3.5 Document test results (count, any failures, timing)
 
 ## 4. Testing - API Layer
 
-- [ ] 4.1 Copy test_state_export.py from Test-repository to firmware_emulator/tests/
-- [ ] 4.2 Copy test_api_server.py from Test-repository to firmware_emulator/tests/
-- [ ] 4.3 Update imports in test files to use absolute paths
-- [ ] 4.4 Run `pytest firmware_emulator/tests/test_state_export.py -v` (verify 100% pass)
-- [ ] 4.5 Run `pytest firmware_emulator/tests/test_api_server.py -v` (verify 100% pass)
-- [ ] 4.6 Document test results and coverage
+- [x] 4.1 Copy test_state_export.py from Test-repository to firmware_emulator/tests/
+- [x] 4.2 Copy test_api_server.py from Test-repository to firmware_emulator/tests/
+- [x] 4.3 Update imports in test files to use absolute paths
+- [x] 4.4 Run `pytest firmware_emulator/tests/test_state_export.py -v` (verify 100% pass)
+- [x] 4.5 Run `pytest firmware_emulator/tests/test_api_server.py -v` (verify 100% pass)
+- [x] 4.6 Document test results and coverage
 
 ## 5. Testing - Manual API Verification
 
@@ -46,12 +46,12 @@
 
 ## 6. Visualizer Integration
 
-- [ ] 6.1 Copy visualizer/ directory from Test-repository to project root
-- [ ] 6.2 Verify visualizer/index.html exists and is readable
-- [ ] 6.3 Verify visualizer/app.js, styles.css, mock_states.json exist
-- [ ] 6.4 Open visualizer/index.html in browser (file:// URL or via http server)
-- [ ] 6.5 Verify Mock mode works: states cycle every 500ms, UI updates smoothly
-- [ ] 6.6 Verify Live mode works: toggle to Live, connect to http://localhost:5000
+- [x] 6.1 Copy visualizer/ directory from Test-repository to project root
+- [x] 6.2 Verify visualizer/index.html exists and is readable
+- [x] 6.3 Verify visualizer/app.js, styles.css, mock_states.json exist
+- [x] 6.4 Open visualizer/index.html in browser (file:// URL or via http server)
+- [x] 6.5 Verify Mock mode works: states cycle every 500ms, UI updates smoothly
+- [x] 6.6 Verify Live mode works: toggle to Live, connect to http://localhost:5000
 
 ## 7. Testing - Visualizer with Running Emulator
 
