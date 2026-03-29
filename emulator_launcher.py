@@ -216,6 +216,18 @@ class EmulatorLauncher:
             self.log(f"[INFO] Script: {script_path}")
             self.log("[INFO] Starting process...\n")
             
+            # Show opcode statistics
+            try:
+                sys.path.insert(0, str(emulator_dir))
+                from firmware_emulator.src.opcode_handler import OpcodeHandler
+                import logging
+                logger = logging.getLogger()
+                handler = OpcodeHandler(logger)
+                opcode_count = len(handler.list_handlers())
+                self.log(f"[INFO] Firmware API: {opcode_count} opcodes loaded")
+            except Exception as e:
+                self.log(f"[WARNING] Could not load opcode statistics: {e}")
+            
             # Use COM2 (ELTIMA Emulator port)
             port = "COM2"
             self.log(f"[INFO] Using port: {port}")
