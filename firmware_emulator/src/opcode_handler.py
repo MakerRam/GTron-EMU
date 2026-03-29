@@ -534,17 +534,50 @@ class OpcodeHandler:
         
         # ===== SHUTDOWN =====
         def handle_tpstp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpSTP: Shutdown/Stop command."""
+            """TPSTP: Shutdown/Stop command."""
             return "", state
         
-        self.register("tpSTP", handle_tpstp)
+        self.register("TPSTP", handle_tpstp)
         
         def handle_tpstr(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpSTR: Status/State response."""
+            """TPSTR: Status/State response."""
             # This is a response opcode, not typically called
             return "TPSTR", state
         
-        self.register("tpSTR", handle_tpstr)
+        self.register("TPSTR", handle_tpstr)
+        
+        # ===== INTERRUPT TRIGGER EVENTS (IE*) =====
+        def handle_iesel(state: DeviceState) -> Tuple[str, DeviceState]:
+            """IESEL: Select button pressed - interrupt trigger."""
+            # IE* opcodes are interrupt triggers from hardware buttons
+            # They don't have standard responses, just acknowledge receipt
+            return "", state
+        
+        self.register("IESEL", handle_iesel)
+        
+        def handle_ierun(state: DeviceState) -> Tuple[str, DeviceState]:
+            """IERUN: Run button pressed - interrupt trigger."""
+            return "", state
+        
+        self.register("IERUN", handle_ierun)
+        
+        def handle_iepau(state: DeviceState) -> Tuple[str, DeviceState]:
+            """IEPAU: Pause button pressed - interrupt trigger."""
+            return "", state
+        
+        self.register("IEPAU", handle_iepau)
+        
+        def handle_iepas(state: DeviceState) -> Tuple[str, DeviceState]:
+            """IEPAS: Pass/Success event - interrupt trigger."""
+            return "", state
+        
+        self.register("IEPAS", handle_iepas)
+        
+        def handle_iefai(state: DeviceState) -> Tuple[str, DeviceState]:
+            """IEFAI: Fail/Error event - interrupt trigger."""
+            return "", state
+        
+        self.register("IEFAI", handle_iefai)
         
         # ===== ADDITIONAL HANDLERS FOR COMPLETENESS =====
         def handle_rfs01(state: DeviceState) -> Tuple[str, DeviceState]:
