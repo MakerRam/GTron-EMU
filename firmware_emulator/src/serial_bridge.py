@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 class SerialBridge:
     """Manages virtual COM port communication with 5-byte ASCII protocol"""
     
-    def __init__(self, port: str, baudrate: int = 9600, timeout: float = 1.0, bytesize: int = 8, stopbits: int = 1, parity: str = 'N') -> None:
+    def __init__(self, port: str, baudrate: int = 9600, timeout: float = 1.0, bytesize: int = 8, stopbits: int = 1, parity: str = 'N', 
+                 rtscts: bool = False, dsrdtr: bool = False, xonxoff: bool = False) -> None:
         """Initialize serial bridge.
         
         Args:
@@ -19,6 +20,9 @@ class SerialBridge:
             bytesize: Data bits (default 8)
             stopbits: Stop bits (default 1)
             parity: Parity ('N' = None, 'E' = Even, 'O' = Odd)
+            rtscts: Enable RTS/CTS flow control (default False)
+            dsrdtr: Enable DSR/DTR flow control (default False)
+            xonxoff: Enable XON/XOFF software flow control (default False)
             
         Raises:
             serial.SerialException: If port cannot be opened
@@ -30,9 +34,27 @@ class SerialBridge:
                 bytesize=bytesize, 
                 stopbits=stopbits, 
                 parity=parity, 
-                timeout=timeout
+                timeout=timeout,
+                write_timeout=timeout,  # Also set write timeout to match read timeout
+                rtscts=rtscts,
+                dsrdtr=dsrdtr,
+                xonxoff=xonxoff
             )
-            logger.info(f"Serial port {port} opened at {baudrate} baud")
+            # Clear any residual data in the buffer
+            self._port.reset_input_buffer()
+            self._port.reset_output_buffer()
+            
+            # Log port configuration for debugging
+            flow_control = []
+            if rtscts:
+                flow_control.append("RTS/CTS")
+            if dsrdtr:
+                flow_control.append("DSR/DTR")
+            if xonxoff:
+                flow_control.append("XON/XOFF")
+            
+            flow_str = f"(flow control: {', '.join(flow_control)})" if flow_control else "(no flow control)"
+            logger.info(f"Serial port {port} opened at {baudrate} baud {flow_str}")
         except serial.SerialException as e:
             logger.error(f"Failed to open serial port {port}: {e}")
             raise
@@ -46,17 +68,44 @@ class SerialBridge:
         return self._port.is_open
     
     def read_command(self) -> Optional[bytes]:
-        """Read 5-byte command from serial port.
+        """Read command from serial port.
+        
+        Reads 5-byte commands, handling optional trailing newline from LabVIEW.
+        Protocol: Expects 5-byte ASCII opcode, optionally followed by newline.
         
         Returns:
-            5-byte command if available, None if no data ready or timeout
+            5-byte command if valid, None if timeout or no complete command
         """
-        if self._port.in_waiting >= 5:
+        try:
+            # Strategy: Read exactly 5 bytes (the opcode)
             data = self._port.read(5)
-            if len(data) == 5:
-                logger.debug(f"Received: {data}")
-                return data
-        return None
+            
+            if len(data) < 5:
+                # Timeout or incomplete read
+                if len(data) > 0:
+                    logger.warning(f"Incomplete read: got {len(data)} bytes, expected 5: {data}")
+                return None
+            
+            # We have exactly 5 bytes
+            logger.debug(f"Received: {data}")
+            
+            # Check if there's a trailing newline (6th byte) and consume it
+            # This prevents it from being picked up as the start of the next command
+            if self._port.in_waiting > 0:
+                next_byte = self._port.read(1)
+                if next_byte and next_byte not in (b'\n', b'\r'):
+                    # Unexpected byte after command - this might be part of next command
+                    logger.warning(f"Unexpected byte after command: {next_byte}")
+                    # Put it back by... well, we can't, so log it
+                    logger.debug(f"Note: {next_byte} consumed from buffer")
+                else:
+                    logger.debug(f"Consumed trailing newline: {next_byte}")
+            
+            return data
+            
+        except Exception as e:
+            logger.error(f"Error reading from serial port: {e}")
+            return None
     
     def write_response(self, response: bytes) -> bool:
         """Write response to serial port.

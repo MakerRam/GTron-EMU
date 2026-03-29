@@ -73,3 +73,52 @@ class TestSerialBridge:
                 assert bridge.is_open() is True
             
             mock_port.close.assert_called_once()
+    
+    def test_read_command_consumes_trailing_newline(self):
+        """read_command should consume trailing newline to prevent buffer contamination"""
+        with patch('firmware_emulator.src.serial_bridge.serial.Serial') as mock_serial:
+            mock_port = MagicMock()
+            
+            # First read returns 5 bytes (opcode)
+            # Second read returns 1 byte (newline)
+            mock_port.read.side_effect = [b'QUERY', b'\n']
+            mock_port.in_waiting = 1  # Newline is waiting
+            mock_serial.return_value = mock_port
+            
+            bridge = SerialBridge(port="COM3")
+            cmd = bridge.read_command()
+            
+            # Should only return the 5-byte opcode, not the newline
+            assert cmd == b'QUERY'
+            assert len(cmd) == 5
+            # Should have read twice: once for opcode, once for newline
+            assert mock_port.read.call_count == 2
+    
+    def test_consecutive_commands_with_newlines(self):
+        """read_command should handle consecutive commands each with trailing newline"""
+        with patch('firmware_emulator.src.serial_bridge.serial.Serial') as mock_serial:
+            mock_port = MagicMock()
+            
+            # Simulate: QUERY\n, then SMINI\n
+            mock_port.read.side_effect = [
+                b'QUERY',  # First command
+                b'\n',     # First newline
+                b'SMINI',  # Second command
+                b'\n',     # Second newline
+            ]
+            # Each command will have in_waiting > 0
+            mock_port.in_waiting = 1
+            mock_serial.return_value = mock_port
+            
+            bridge = SerialBridge(port="COM3")
+            
+            # First read
+            cmd1 = bridge.read_command()
+            assert cmd1 == b'QUERY'
+            
+            # Second read should not get contaminated by first newline
+            cmd2 = bridge.read_command()
+            assert cmd2 == b'SMINI'
+            
+            # Verify read was called 4 times (2 per command)
+            assert mock_port.read.call_count == 4
