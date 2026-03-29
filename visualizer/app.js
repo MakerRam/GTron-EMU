@@ -8,7 +8,7 @@ const CONFIG = {
     pollInterval: 100,          // ms - how often to fetch state in LIVE mode
     mockCycleInterval: 500,     // ms - how often to advance mock state
     maxLogEntries: 20,
-    mode: 'mock'                // 'mock' or 'live'
+    mode: 'live'                // 'mock' or 'live'
 };
 
 // --- State ---
@@ -46,7 +46,9 @@ async function fetchLiveState() {
     const url = document.getElementById('api-url').value || CONFIG.apiUrl;
     const response = await fetch(url + '/api/state', { signal: AbortSignal.timeout(2000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
+    const state = await response.json();
+    console.log('[DBG-UI] /api/state last_command=' + state.last_command + '  lamps=' + JSON.stringify(state.lamps));
+    return state;
 }
 
 async function fetchState() {
@@ -62,9 +64,15 @@ async function fetchState() {
 // ============================================
 
 function updateCommandLog(state) {
-    if (!state || !state.last_command) return;
-    if (state.last_command === lastSeenCommand) return;
-
+    if (!state || !state.last_command) {
+        console.log('[DBG-UI] updateCommandLog: SKIPPED - no last_command');
+        return;
+    }
+    if (state.last_command === lastSeenCommand) {
+        console.log('[DBG-UI] updateCommandLog: SKIPPED - same as lastSeenCommand=' + lastSeenCommand);
+        return;
+    }
+    console.log('[DBG-UI] updateCommandLog: NEW command=' + state.last_command + '  (was ' + lastSeenCommand + ')');
     lastSeenCommand = state.last_command;
 
     const now = new Date();
@@ -416,11 +424,12 @@ function stopPolling() {
 async function init() {
     console.log('Vision System Monitor starting...');
 
-    // Load mock states
+    // Load mock states (available for manual switch to mock mode)
     await loadMockStates();
 
-    // Set initial mode
-    renderConnectionStatus('mock');
+    // Start in Live mode by default so real API data is shown immediately
+    document.getElementById('api-url').classList.add('visible');
+    renderConnectionStatus('connected');
 
     // Start polling
     startPolling();

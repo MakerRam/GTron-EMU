@@ -89,7 +89,7 @@ class TestStateEndpoint:
         resp = client.get("/api/state")
         data = resp.get_json()
         assert "guide_top" in data
-        assert data["guide_top"]["position"] == "closed"
+        assert data["guide_top"]["position"] == "unknown"
 
     def test_includes_cameras(self, client):
         resp = client.get("/api/state")

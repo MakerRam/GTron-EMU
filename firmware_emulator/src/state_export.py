@@ -10,6 +10,8 @@ Does NOT modify DeviceState — read-only access.
 import json
 import time
 from typing import Any, Dict
+from dataclasses import asdict
+from enum import Enum
 
 from firmware_emulator.src.device_state import DeviceState
 
@@ -35,6 +37,17 @@ class StateExporter:
             dataclasses are nested dicts.
         """
         state_dict = self._state.to_dict()
+        # Convert enum values to strings
+        def convert_enums(obj):
+            if isinstance(obj, Enum):
+                return obj.value
+            elif isinstance(obj, dict):
+                return {k: convert_enums(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return [convert_enums(item) for item in obj]
+            return obj
+        
+        state_dict = convert_enums(state_dict)
         state_dict["_metadata"] = {
             "timestamp": time.time(),
             "version": API_VERSION,
@@ -69,7 +82,7 @@ class StateExporter:
             "sag_top_lower": s.sag_top_lower,
             "sag_bottom_upper": s.sag_bottom_upper,
             "sag_bottom_lower": s.sag_bottom_lower,
-            "lamps": s.lamps.to_dict(),
+            "lamps": asdict(s.lamps),
             "camera_flags": {str(k): v for k, v in s.cameras.flags.items()},
             "door_locked": s.door_locked,
             "estop_pressed": s.estop_pressed,

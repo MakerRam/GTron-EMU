@@ -3,7 +3,7 @@ Unit Tests for Device State Machine
 """
 import pytest
 import json
-from src.device_state import (
+from firmware_emulator.src.device_state import (
     DeviceState, GuideState, ReelerState, SensorState, EncoderState,
     CameraState, LampState, GuidePosition, MotorState
 )

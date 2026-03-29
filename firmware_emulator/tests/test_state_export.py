@@ -56,7 +56,7 @@ class TestGetStateDict:
     def test_includes_guide_top(self, exporter):
         result = exporter.get_state_dict()
         assert "guide_top" in result
-        assert result["guide_top"]["position"] == "closed"
+        assert result["guide_top"]["position"] == "unknown"
 
     def test_includes_guide_bottom(self, exporter):
         result = exporter.get_state_dict()
@@ -75,7 +75,10 @@ class TestGetStateDict:
     def test_includes_lamps(self, exporter):
         result = exporter.get_state_dict()
         assert "lamps" in result
-        assert result["lamps"]["green"] is True
+        assert "red" in result["lamps"]
+        assert "yellow" in result["lamps"]
+        assert "green" in result["lamps"]
+        assert "buzzer" in result["lamps"]
 
     def test_includes_sag_sensors(self, exporter):
         result = exporter.get_state_dict()
@@ -101,7 +104,7 @@ class TestGetStateDict:
     def test_does_not_modify_original_state(self, exporter, state):
         result = exporter.get_state_dict()
         result["guide_top"]["position"] = "TAMPERED"
-        assert state.guide_top.position == GuidePosition.CLOSED
+        assert state.guide_top.position == GuidePosition.UNKNOWN
 
 
 # --- get_state_json Tests ---

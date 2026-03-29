@@ -42,29 +42,49 @@ class EmulatorEngine:
         self.api_server = None
         self.enable_api = enable_api
         if enable_api:
-            self.api_server = APIServer(self.state_exporter, port=api_port)
+            self.api_server = APIServer(
+                self.state_exporter,
+                port=api_port,
+                command_handler=self.opcode_handler.dispatch,
+                device_state_ref=[self.device_state],
+            )
         
         logger.info(f"Emulator engine initialized on {port}")
     
     def _process_command(self, cmd_bytes: bytes) -> bytes:
         """Process received command."""
+        print(f"[DBG-SERIAL] _process_command: raw={cmd_bytes!r}", flush=True)
         if not CommandParser.is_valid_command(cmd_bytes):
             logger.warning(f"Invalid command format: {cmd_bytes}")
+            print(f"[DBG-SERIAL] rejected invalid command", flush=True)
             return b'FLS'
         
         opcode = CommandParser.parse(cmd_bytes)
-        
+        print(f"[DBG-SERIAL] opcode={opcode!r}", flush=True)
+
         try:
             response, self.device_state = self.opcode_handler.dispatch(opcode, self.device_state)
+
+            # Log the command to device state for tracking in UI
+            self.device_state.log_command(opcode)
+
+            # Sync exporter's state reference to the new state object
+            # (dispatch returns a new DeviceState instance; exporter must follow it)
+            if self.state_exporter is not None:
+                self.state_exporter._state = self.device_state
+                print(f"[DBG-SERIAL] exporter synced: last_command={self.state_exporter._state.last_command!r}", flush=True)
+
             # Convert response string to bytes, pad to 5 bytes
             response_bytes = response.encode('ascii') if response else b''
             response_bytes = response_bytes.ljust(5, b' ')[:5]  # Pad or truncate to 5 bytes
             return response_bytes
         except KeyError:
             logger.error(f"Unknown opcode: {opcode}")
+            print(f"[DBG-SERIAL] UNKNOWN opcode: {opcode!r}", flush=True)
             return b'FLS'
         except Exception as e:
             logger.error(f"Error processing opcode {opcode}: {e}")
+            print(f"[DBG-SERIAL] EXCEPTION: {e}", flush=True)
             return b'FLS'
     
     def _log_transaction(self, cmd_bytes: bytes, response: bytes):
@@ -130,8 +150,8 @@ class EmulatorEngine:
         self.serial_bridge.close()
         logger.info("=== Emulator Stopped ===")
 
-def main():
-    """Entry point for emulator"""
+def create_parser():
+    """Create argument parser for emulator CLI"""
     parser = argparse.ArgumentParser(description="Vision System Firmware Emulator")
     parser.add_argument('--port', required=True, help='Serial port (e.g., COM3)')
     parser.add_argument('--baudrate', type=int, default=115200, help='Baud rate (default 115200)')
@@ -144,7 +164,11 @@ def main():
     parser.add_argument('--no-api', action='store_true', help='Disable HTTP API server')
     parser.add_argument('--debug', nargs='*', default=[], help='Debug breakpoint opcodes (Phase 2)')
     parser.add_argument('--interactive', action='store_true', help='Interactive monitor mode (Phase 2)')
-    
+    return parser
+
+def main():
+    """Entry point for emulator"""
+    parser = create_parser()
     args = parser.parse_args()
     
     # Setup logging

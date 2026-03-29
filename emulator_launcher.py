@@ -201,6 +201,34 @@ class EmulatorLauncher:
         thread = threading.Thread(target=self._run_emulator, daemon=True)
         thread.start()
         
+    def _check_dependencies(self) -> bool:
+        """Check that required packages are installed. Returns True if OK."""
+        missing = []
+        try:
+            import flask  # noqa: F401
+        except ImportError:
+            missing.append("flask")
+        try:
+            import flask_cors  # noqa: F401
+        except ImportError:
+            missing.append("flask-cors")
+        try:
+            import serial  # noqa: F401
+        except ImportError:
+            missing.append("pyserial")
+
+        if missing:
+            self.log(f"[ERROR] Missing Python packages: {', '.join(missing)}")
+            self.log("[INFO] Install them by running in a terminal:")
+            self.log(f"       {sys.executable} -m pip install {' '.join(missing)}")
+            self.log("[INFO] Then restart the launcher.")
+            self.root.after(0, lambda: self.status_label.config(
+                text="Status: ❌ Missing dependencies - see log", fg="#e74c3c"))
+            self.root.after(0, lambda: self.start_btn.config(state=tk.NORMAL))
+            self.root.after(0, lambda: self.stop_btn.config(state=tk.DISABLED))
+            return False
+        return True
+
     def _run_emulator(self):
         """Run emulator in background thread"""
         try:
@@ -212,7 +240,10 @@ class EmulatorLauncher:
                 self.log(f"[ERROR] Script not found: {script_path}")
                 self.status_label.config(text="Status: ❌ Error - Script not found", fg="#e74c3c")
                 return
-            
+
+            if not self._check_dependencies():
+                return
+
             self.log(f"[INFO] Script: {script_path}")
             self.log("[INFO] Starting process...\n")
             
