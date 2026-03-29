@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 from firmware_emulator.src.serial_bridge import SerialBridge
 from firmware_emulator.src.command_parser import CommandParser
-from firmware_emulator.src.opcode_handlers import OpcodeDispatcher
+from firmware_emulator.src.opcode_handler import OpcodeHandler
+from firmware_emulator.src.device_state import DeviceState
 from firmware_emulator.src.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ class EmulatorEngine:
             logger.error(f"Failed to initialize serial bridge: {e}")
             raise
         
-        self.dispatcher = OpcodeDispatcher()
+        self.opcode_handler = OpcodeHandler(logger)
+        self.device_state = DeviceState()
         self.running = False
         logger.info(f"Emulator engine initialized on {port}")
     
@@ -41,9 +43,19 @@ class EmulatorEngine:
             return b'FLS'
         
         opcode = CommandParser.parse(cmd_bytes)
-        response = self.dispatcher.dispatch(opcode)
         
-        return response
+        try:
+            response, self.device_state = self.opcode_handler.dispatch(opcode, self.device_state)
+            # Convert response string to bytes, pad to 5 bytes
+            response_bytes = response.encode('ascii') if response else b''
+            response_bytes = response_bytes.ljust(5, b' ')[:5]  # Pad or truncate to 5 bytes
+            return response_bytes
+        except KeyError:
+            logger.error(f"Unknown opcode: {opcode}")
+            return b'FLS'
+        except Exception as e:
+            logger.error(f"Error processing opcode {opcode}: {e}")
+            return b'FLS'
     
     def _log_transaction(self, cmd_bytes: bytes, response: bytes):
         """Log command/response transaction."""
