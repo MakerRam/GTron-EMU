@@ -683,14 +683,6 @@ Complete reference of all 75 firmware opcodes implemented in the emulator.
 **Usage**: Query system status  
 **Protocol**: 5-byte ASCII
 
-#### IEDRL
-**Type**: Phase 1 Enhancement  
-**Purpose**: Door lock interrupt event  
-**Response**: (empty)  
-**State Changes**: None  
-**Usage**: Interrupt trigger for door lock operations  
-**Protocol**: 5-byte ASCII
-
 ---
 
 ## Summary by Category
