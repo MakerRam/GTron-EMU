@@ -139,10 +139,10 @@
 
 ## 15. Git & Commit
 
-- [ ] 15.1 Add all new files to git: `git add firmware_emulator/src/state_export.py api_server.py visualizer/ requirements.txt`
-- [ ] 15.2 Add modified files: `git add firmware_emulator/src/main.py tests/`
-- [ ] 15.3 Create commit with message: "feat: add Phase 2 visualization API and dashboard"
-- [ ] 15.4 Push to develop branch: `git push origin develop`
+- [x] 15.1 Add all new files to git: `git add firmware_emulator/src/state_export.py api_server.py visualizer/ requirements.txt`
+- [x] 15.2 Add modified files: `git add firmware_emulator/src/main.py tests/`
+- [x] 15.3 Create commit with message: "feat: add Phase 2 visualization API and dashboard"
+- [x] 15.4 Push to develop branch: `git push origin develop`
 - [ ] 15.5 Create pull request against master branch for review
 
 ## 16. Handoff & Archive
