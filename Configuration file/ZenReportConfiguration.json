@@ -1,0 +1,278 @@
+{
+    "SystemSpecificParameters": {
+        "SystemName": "QMS",
+        "CompanyName": "Molex",
+        "Location": "Bengaluru",
+        "Department": "Automation",
+        "ExtraMeasurementRows": 0,
+        "ZentronLogoFilepath": "Image files\\Zentron.png",
+        "CustomerLogoFilepath": "Image files\\zen.png",
+        "OutputFilePath": "C:\\Users\\Public\\Documents\\iMM\\Quantitative Data",
+        "ImageTempFilePath": "Image files",
+        "PrinterParameters": {
+            "PrinterNamesList": [
+                "Printer1",
+                "Printer2"
+            ],
+            "DefaultPrinterName": "HP LaserJet MFP M128fw"
+        },
+        "HeaderFields": [
+            {
+                "FieldName": "Part Name",
+                "Value": "temporary",
+                "CustomizeLevel": 1,
+                "Mandatory": true
+            },
+            {
+                "FieldName": "Operator Name",
+                "Value": "Guest",
+                "CustomizeLevel": 2,
+                "Mandatory": true
+            },
+            {
+                "FieldName": "Customer Name",
+                "Value": " ",
+                "CustomizeLevel": 1,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "DocumentNo",
+                "Value": "RCPL/Rcd/45",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Rev.No.",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            }
+        ],
+        "PrefaceFields": [
+            {
+                "FieldName": "IR No",
+                "Value": "RCPL/IR/$ReportNo$/001/22-23",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Product",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Order No",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Invoice No",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Item No",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Date and Time",
+                "Value": " ",
+                "CustomizeLevel": 2,
+                "Mandatory": true
+            },
+            {
+                "FieldName": "Description",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Customer Part No",
+                "Value": " ",
+                "CustomizeLevel": 1,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Material",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Sample Size",
+                "Value": " ",
+                "CustomizeLevel": 0,
+                "Mandatory": false
+            },
+            {
+                "FieldName": "Status",
+                "Value": " ",
+                "CustomizeLevel": 2,
+                "Mandatory": true
+            },
+            {
+                "FieldName": "QR Code",
+                "Value": "",
+                "CustomizeLevel": 2,
+                "Mandatory": true
+            },
+            {
+                "FieldName": "Shift Details",
+                "Value": "",
+                "CustomizeLevel": 2,
+                "Mandatory": true
+            },
+            {
+                "FieldName": "OperatorClockNo",
+                "Value": "",
+                "CustomizeLevel": 2,
+                "Mandatory": true
+            }
+        ],
+        "ActualImagePath": "",
+        "QRImagePath": ""
+    },
+    "PartSpecificParameters": [
+        {
+            "ReportType": "Part",
+            "TableParameters": [
+                {
+                    "TableID": 1,
+                    "ColumnDetails": [
+                        {
+                            "ColumnName": "Measurement Name",
+                            "ColumnWidth": 12,
+                            "ColumnTextAlignment": "left"
+                        }
+                    ]
+                }
+            ],
+            "ImageParameters": [
+                {
+                    "ImageID": "1",
+                    "ImageBookmark": "image1",
+                    "ImageScalingParameters": {
+                        "Width": 195,
+                        "Height": 165,
+                        "Unit": "mm"
+                    },
+                    "DefaultDisplayString": "String to be displayed instead of image file",
+                    "ImageFilepath": "",
+                    "ResamplingFactor": 1,
+                    "UseDefaultScaling": false
+                },
+                {
+                    "ImageID": "2",
+                    "ImageBookmark": "image2",
+                    "ImageScalingParameters": {
+                        "Width": 32,
+                        "Height": 12,
+                        "Unit": "mm"
+                    },
+                    "DefaultDisplayString": "String to be displayed instead of image file",
+                    "ImageFilepath": "",
+                    "ResamplingFactor": 1,
+                    "UseDefaultScaling": false
+                }
+            ]
+        },
+        {
+            "ReportType": "Batch",
+            "TableParameters": [
+                {
+                    "TableID": 1,
+                    "ColumnDetails": [
+                        {
+                            "ColumnName": "Measurement Name",
+                            "ColumnWidth": 12,
+                            "ColumnTextAlignment": "left"
+                        }
+                    ]
+                }
+            ],
+            "ImageParameters": [
+                {
+                    "ImageID": "1",
+                    "ImageBookmark": "image1",
+                    "ImageScalingParameters": {
+                        "Width": 450,
+                        "Height": 301,
+                        "Unit": "pt"
+                    },
+                    "DefaultDisplayString": "String to be displayed instead of image file",
+                    "ImageFilepath": "",
+                    "ResamplingFactor": 1,
+                    "UseDefaultScaling": false
+                },
+                {
+                    "ImageID": "2",
+                    "ImageBookmark": "image2",
+                    "ImageScalingParameters": {
+                        "Width": 32,
+                        "Height": 12,
+                        "Unit": "pt"
+                    },
+                    "DefaultDisplayString": "String to be displayed instead of image file",
+                    "ImageFilepath": "",
+                    "ResamplingFactor": 1,
+                    "UseDefaultScaling": false
+                }
+            ]
+        },
+        {
+            "ReportType": "Measurement",
+            "TableParameters": [
+                {
+                    "TableID": 1,
+                    "ColumnDetails": [
+                        {
+                            "ColumnName": "Machine ID",
+                            "ColumnWidth": 10,
+                            "ColumnTextAlignment": "center"
+                        }
+                    ]
+                },
+                {
+                    "TableID": 2,
+                    "ColumnDetails": [
+                        {
+                            "ColumnName": "Nominal Value",
+                            "ColumnWidth": 10,
+                            "ColumnTextAlignment": "center"
+                        }
+                    ]
+                },
+                {
+                    "TableID": 3,
+                    "ColumnDetails": [
+                        {
+                            "ColumnName": "Mean Value",
+                            "ColumnWidth": 10,
+                            "ColumnTextAlignment": "center"
+                        }
+                    ]
+                }
+            ],
+            "ImageParameters": [
+                {
+                    "ImageID": "1",
+                    "ImageBookmark": "ReportImage",
+                    "ImageScalingParameters": {
+                        "Width": 450,
+                        "Height": 301,
+                        "Unit": "pt"
+                    },
+                    "DefaultDisplayString": "String to be displayed instead of image file",
+                    "ImageFilepath": "",
+                    "ResamplingFactor": 1,
+                    "UseDefaultScaling": false
+                }
+            ]
+        }
+    ]
+}

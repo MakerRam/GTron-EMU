@@ -1,0 +1,480 @@
+{
+  "MachineInterfaceParameters": {
+    "SpecificationVersion": "V1.9",
+    "CompatibleSoftwareVersions": [
+      "ZenGage V2.0.2"
+    ],
+    "FrontPanelOpen": true,
+    "Offline": false,
+    "NumberOfBytesToBeRead": 13,
+    "DelayValuesInms": {
+      "TimingUnitSetup": 2000,
+      "StrobingForCamOpticsDiagnostics": 100,
+      "TowerLampDiagnostics": 1000,
+      "Run": 50,
+      "DisableSensors": 250,
+      "DisableEncoder": 5,
+      "CommunicationBoardConfiguration": 1,
+      "SendEncoderOpcodes": 1
+    },
+    "TimeoutInms": {
+      "Ping": 5000,
+      "MachinePowerStatus": 5000,
+      "LimitSwitchStatusCheck": 2000,
+      "MotorDiagnostics": 50000,
+      "ReferenceSearch": 50000,
+      "ReadyToInsert": 20000,
+      "ReadyToRun": 5000
+    },
+    "HardwareConfigurationParameters": {
+      "BaudRate": 115200
+    },
+    "MachineInterfaceRecipeOpcodes": {
+      "DeviceReadiness": {
+        "Ping": [
+          "QUERY"
+        ],
+        "PingResponse": "YES"
+      },
+      "CommunicationBoardConfiguration": [
+        "SMINI"
+      ],
+      "Initialization": [
+        {
+          "Clear": [
+            ""
+          ]
+        },
+        {
+          "Debug": [
+            ""
+          ]
+        },
+        {
+          "PinModeConfiguration": [
+            ""
+          ]
+        },
+        {
+          "EventSequenceOpcodes": [
+            ""
+          ]
+        },
+        {
+          "LogicalOperations": [
+            ""
+          ]
+        },
+        {
+          "ConditionalOperations": [
+            ""
+          ]
+        },
+        {
+          "InterruptTriggerBindingOpcodes": [
+            ""
+          ]
+        },
+        {
+          "PinInformation": [
+            ""
+          ]
+        }
+      ],
+      "MachinePowerStatus": {
+        "MachinePowerStatusCheck": [
+          ""
+        ],
+        "MachinePowerStatusResponse": {
+          "On": "",
+          "Off": ""
+        }
+      },
+      "DoorLock": {
+        "DoorLockStatusCheck": [
+          "DOORC"
+        ],
+        "DoorLockStatusResponse": {
+          "Lock": "DL1",
+          "Unlock": "DL0"
+        },
+        "Enable": [
+          "ATDRL"
+        ],
+        "Disable": [
+          "DTDRL"
+        ]
+      },
+      "PressureSwitch": {
+        "PressureSwitchStatusCheck": [
+          ""
+        ],
+        "PressureSwitchStatusResponse": {
+          "On": "",
+          "Off": ""
+        },
+        "Enable": [
+          ""
+        ],
+        "Disable": [
+          ""
+        ]
+      },
+      "OpenLimitSwitchStatus": [
+        {
+          "LimitSwitchStatusCheck": [
+            "tpLSC"
+          ],
+          "LimitSwitchStatusResponse": {
+            "Pressed": "tpOL1",
+            "NotPressed": "tpOL0"
+          }
+        }
+      ],
+      "MotorDiagnostics": [
+        {
+          "GuideOpen": [
+            "tpGOP"
+          ],
+          "GuideOpenResponse": {
+            "Done": "tpGOR",
+            "Fail": ""
+          },
+          "GuideClose": [
+            "tpGCL"
+          ],
+          "GuideCloseResponse": {
+            "Done": "tpGCR",
+            "Fail": ""
+          },
+          "RotateReelerMotor": [
+            "tpRTR"
+          ]
+        }
+      ],
+      "ReferenceSearch": [
+        {
+          "ReferenceSearch": [
+            "RFS01"
+          ],
+          "ReferenceSearchResponse": {
+            "Done": "TRD01",
+            "Fail": "TFD01"
+          }
+        }
+      ],
+      "HardwareButtonDiagnostics": {
+        "Run": {
+          "Enable": [
+            "ATRUN"
+          ],
+          "Disable": [
+            "DTRUN"
+          ]
+        },
+        "Pause": {
+          "Enable": [
+            "ATPAU"
+          ],
+          "Disable": [
+            "DTPAU"
+          ]
+        },
+        "Stop": {
+          "Enable": [
+            "ATSTP"
+          ],
+          "Disable": [
+            "DTSTP"
+          ]
+        },
+        "BuzzerOff": {
+          "Enable": [
+            "ATBOF"
+          ],
+          "Disable": [
+            "DTBOF"
+          ]
+        }
+      },
+      "TriggerLightCameraSequence": [
+        {
+          "Name": "LightCameraSequence1",
+          "On": [
+            "LCS01"
+          ],
+          "Off": [
+            ""
+          ]
+        },
+        {
+          "Name": "LightCameraSequence2",
+          "On": [
+            "LCS02"
+          ],
+          "Off": [
+            ""
+          ]
+        },
+        {
+          "Name": "LightCameraSequence3",
+          "On": [
+            "LCS03"
+          ],
+          "Off": [
+            ""
+          ]
+        },
+        {
+          "Name": "AllLightCameraSequence",
+          "On": [
+            "LCStp"
+          ],
+          "Off": [
+            ""
+          ]
+        }
+      ],
+      "SensorDiagnostics": [
+        {
+          "Name": "Sensor1",
+          "Opcodes": [
+            "tpATS",
+            "POS01"
+          ]
+        },
+        {
+          "Name": "Sensor2",
+          "Opcodes": [
+            "tpATS",
+            "POS02"
+          ]
+        },
+        {
+          "Name": "Sensor3",
+          "Opcodes": [
+            "tpATS",
+            "POS03"
+          ]
+        }
+      ],
+      "EncoderDiagnostics": [
+        {
+          "Name": "Encoder1",
+          "Opcodes": [
+            ""
+          ]
+        }
+      ],
+      "TowerLampDiagnostics": {
+        "RedLamp": {
+          "On": "TRED1",
+          "Off": "TRED0"
+        },
+        "YellowLamp": {
+          "On": "TYEL1",
+          "Off": "TYEL0"
+        },
+        "GreenLamp": {
+          "On": "TGRN1",
+          "Off": "TGRN0"
+        },
+        "Buzzer": {
+          "On": "TBZR1",
+          "Off": "TBZR0"
+        }
+      },
+      "Select": [
+        {
+          "HardwareButtonStatus": [
+            "IESEL"
+          ]
+        },
+        {
+          "SwitchOnYellow": [
+            "IESEL"
+          ]
+        },
+        {
+          "StampingWindingControl": [
+            "IESEL"
+          ]
+        }
+      ],
+      "Run": {
+        "HardwareButtonStatus": [
+          "IERUN",
+          "tpSTR"
+        ],
+        "Pass": {
+          "TowerLampStatus": [
+            "IEPAS"
+          ]
+        }
+      },
+      "Pause": {
+        "PauseButtonPress": [
+          {
+            "TowerLampStatus": [
+              "IEPAU"
+            ]
+          },
+          {
+            "HardwareButtonStatus": [
+              "IEPAU"
+            ]
+          },
+          {
+            "StampingWindingControl": [
+              "IEPAU"
+            ]
+          }
+        ],
+        "Fail": [
+          {
+            "TowerLampStatus": [
+              "IEFAI"
+            ]
+          },
+          {
+            "HardwareButtonStatus": [
+              "IEFAI"
+            ]
+          },
+          {
+            "StampingWindingControl": [
+              "IEFAI"
+            ]
+          }
+        ],
+        "BuzzerOffButtonPress": {
+          "DisableRun": [
+            "BOFDR"
+          ],
+          "EnableRun": [
+            "BOFER"
+          ]
+        }
+      },
+      "Exit": {
+        "Shutdown": [
+          "tpSTP"
+        ]
+      },
+      "DHBLS": [
+        {
+          "DisableHardwareButtons": [
+            "DHBLS"
+          ]
+        },
+        {
+          "TowerLampsOff": [
+            "DHBLS"
+          ]
+        },
+        {
+          "PowerOffSensors": [
+            "DHBLS"
+          ]
+        },
+        {
+          "DisableSensors": [
+            "DHBLS"
+          ]
+        },
+        {
+          "DisableEncoder": [
+            "DHBLS"
+          ]
+        },
+        {
+          "StampingWindingControl": [
+            "DHBLS"
+          ]
+        }
+      ],
+      "DisableHardwareButtons": [
+        "HWBDB"
+      ],
+      "PartsList": [
+        {
+          "Name": "DMMP-7M33",
+          "RackDependentOpcodes": [
+            {
+              "MotorStepsForReadyToInsert": [
+                "tpGDI",
+                "164000"
+              ],
+              "MotorStepsForReadyToRun": [
+                "tpGDI",
+                "100"
+              ],
+              "Sensor": {
+                "SetIndex": [
+                  ""
+                ],
+                "Enable": [
+                  "tpATS"
+                ],
+                "PowerOn": [
+                  "POS03"
+                ],
+                "Disable": [
+                  "tpDTS"
+                ]
+              },
+              "Encoder": {
+                "InitialSettings": [
+                  "tpENI"
+                ],
+                "SetIndex": [
+                  "tpRSP",
+                  "20000",
+                  "tpRTH",
+                  "12",
+                  "tpINA",
+                  "0"
+                ],
+                "Enable": [
+                  "tpEEN"
+                ],
+                "Disable": [
+                  "tpEDB"
+                ]
+              },
+              "StartReelerMotor": [
+                ""
+              ],
+              "StopReelerMotor": [
+                ""
+              ]
+            }
+          ]
+        }
+      ],
+      "HardwareButtonPress": {
+        "Run": "RUN",
+        "Pause": "PAU",
+        "Stop": "STP",
+        "BuzzerOff": "BOF",
+        "DoorUnlock": "DUL",
+        "PressureSwitch": "",
+        "CameraIdentifier": [
+          "I1",
+          "I2",
+          "I3"
+        ],
+        "EmergencyStop": {
+          "Pressed": "ES1",
+          "Released": "ES0"
+        }
+      },
+      "ReadyPositionReached": "GRD",
+      "IncorrectOpcode": "FLS",
+      "TriggerAck": {
+        "TriggerDone": "TGDON",
+        "DoneAck": "MIRSP"
+      }
+    }
+  }
+}

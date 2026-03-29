@@ -1,0 +1,51 @@
+{
+    "Modules":{
+        "CRakePM":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Algo sequencer\\SubVI\\Pattern matching\\CRake Pattern Matching\\DLL\\"
+        },
+        "CRakePMPyAlgo":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\PyAlgo\\"
+        },
+        "EdgePM":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\PyAlgo\\"
+        },
+        "LaserDetection":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Algo sequencer\\SubVI\\Algorithms\\SubVIs\\Laser3DPointDetection\\DLL\\"
+        },
+        "DistortionDll":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Common\\DLL\\"
+        },
+        "LVCV2Utils":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Common\\DLL\\"
+        },
+        "PVJSONMerge":{
+            "LoggingLevel":"DEBUG"
+        },
+        "PVLVMgr":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\"
+        },
+        "Autodiscovery":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Configurator\\Configurator Actor\\subVIs\\AutoDiscovery\\DLL\\"
+        },
+        "ImageStitching":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Common\\DLL\\"
+        },
+        "2dProfile":{
+            "LoggingLevel":"DEBUG",
+            "DLLDir":"\\Algo sequencer\\SubVI\\Algorithms\\SubVIs\\2DProfile\\DLL\\"
+        }
+    },
+    "AdditionalPythonPaths":[
+        "\\Common\\Scripts\\",
+        "\\Inspection Statemachine\\SubModules\\PyGUI"
+    ]
+}

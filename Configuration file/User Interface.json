@@ -1,0 +1,187 @@
+{
+    "UIParameters":{
+        "SoftwareVersion":"2.7.2.5",
+        "Title":"GTRON",
+        "NumberOfImagesToBeDisplayed":1,
+        "ImageCountWindow":1,
+        "CameraLabelMapping":[
+            {
+                "CameraName":"Top_0",
+                "ImageLabel":"Top"
+            },
+            {
+                "CameraName":"Front_0",
+                "ImageLabel":"Front"
+            },
+            {
+                "CameraName":"Back_0",
+                "ImageLabel":"Back"
+            }
+        ],
+        "ImageIndicatorLayouts":[
+            {
+                "NumberOfImageIndicators":1,
+                "ImageSpecificData":[
+                    {
+                        "Width":1000,
+                        "Height":640,
+                        "Left":250,
+                        "Top":65
+                    }
+                ]
+            },
+            {
+                "NumberOfImageIndicators":2,
+                "ImageSpecificData":[
+                    {
+                        "Width":490,
+                        "Height":640,
+                        "Left":250,
+                        "Top":65
+                    },
+                    {
+                        "Width":490,
+                        "Height":640,
+                        "Left":765,
+                        "Top":65
+                    }
+                ]
+            },
+            {
+                "NumberOfImageIndicators":3,
+                "ImageSpecificData":[
+                    {
+                        "Width":490,
+                        "Height":300,
+                        "Left":250,
+                        "Top":65
+                    },
+                    {
+                        "Width":490,
+                        "Height":640,
+                        "Left":765,
+                        "Top":65
+                    },
+                    {
+                        "Width":490,
+                        "Height":300,
+                        "Left":250,
+                        "Top":405
+                    }
+                ]
+            },
+            {
+                "NumberOfImageIndicators":4,
+                "ImageSpecificData":[
+                    {
+                        "Width":490,
+                        "Height":300,
+                        "Left":250,
+                        "Top":65
+                    },
+                    {
+                        "Width":490,
+                        "Height":300,
+                        "Left":765,
+                        "Top":65
+                    },
+                    {
+                        "Width":490,
+                        "Height":300,
+                        "Left":250,
+                        "Top":405
+                    },
+                    {
+                        "Width":490,
+                        "Height":300,
+                        "Left":765,
+                        "Top":405
+                    }
+                ]
+            }
+        ],
+        "DiagnosticsParameters":{
+            "CameraOpticsDiagnostics":{
+                "Label":"Camera Optics",
+                "CameraLabelsList":[
+                    {
+                        "CameraName":"LightCameraSequence1",
+                        "ImageLabel":"Top"
+                    }
+                ]
+            },
+            "ArduinoDiagnostics":{
+                "Label":"Timing Unit"
+            },
+            "MotorDiagnostics":{
+                "Label":"Guide Motor"
+            },
+            "ReelerMotor":{
+                "Label":"Reeler Motor"
+            },
+            "TowerLampDiagnostics":{
+                "Label":"Tower Lamp"
+            },
+            "TriggerSensor":{
+                "Label":"Trigger Sensor",
+                "SensorsLabelsList":[
+                    {
+                        "SensorName":"Sensor1",
+                        "Label":"Sensor 1"
+                    },
+                    {
+                        "SensorName":"Sensor2",
+                        "Label":"Sensor 2"
+                    }
+                ]
+            },
+            "TriggerEncoder":{
+                "Label":"Trigger Encoder",
+                "EncoderLabelsList":[
+                    {
+                        "EncoderName":"Encoder1",
+                        "Label":"Encoder 1"
+                    }
+                ]
+            },
+            "HardwareButtonDiagnostics":{
+                "Label":"Hardware Buttons"
+            },
+            "MasterSampleDiagnostics":{
+                "Label":"Master Sample"
+            }
+        },
+        "EventReasonsList":{
+            "Pause":[
+                "File open",
+                "Door unlocked",
+                "Edit Tolerance",
+                "Morning Tea Break",
+                "Afternoon Tea Break",
+                "Lunch Break",
+                "Evening Tea Break",
+                "Dinner",
+                "Meeting",
+                "Raw Material Load",
+                "Routine Tool Check",
+                "Training",
+                "Audit",
+                "Accidental Press"
+            ],
+            "Stop":[
+                "Day End",
+                "Target Met",
+                "Part Change"
+            ],
+            "FailPause":[
+                "Damaged Terminal",
+                "Die Tool Issue",
+                "Thread Issue"
+            ],
+            "Ignored":[
+                "Oil Issue",
+                "Dust Issue"
+            ]
+        }
+    }
+}

@@ -1,0 +1,46 @@
+  CHANGES AND UPDATIONS:
+
+  * Solenoid coil state changed in IET
+  * Time Stamp - Enabled.
+  * Light on delay timer in LightCam Sequence defined in Macros.
+  * Emergency Stop implemented to stop reeler rotation in all scenarios.
+  * Syncronization done by communicating to MI for every Light camera Sequence.
+  * Debug enabled through programing port
+  * SD based debug log added
+  * Guide Test Opcode added
+  * 2 rack encoder implemented - need to be tested
+  * 2 rack Camera state Initialized - 18/7/24
+  * Unit test code added
+  * Maximum no. of teeth increased to 70.- 10/08/24
+  * Light Camera sequence flag enable/ disable through MI-10/08/24
+  * Handled first trigger issue in sensor based triggering
+  * Part count reset during stop instead of run, pause state change.
+  * Sensor Trigger debounce delay reduced to 30ms from 50ms to achieve 1200PPM considering execution time.
+  * Optimized Encoder trigger angel by accumulating floating value instead of round off to resolve drift issue.
+  * Added Time stamp enable key in MI Json. Configurable through MI under Part settings-> Set index
+	OPCODE "TSENB"  // Opcode will enable Time stamp | Default state: false
+ 21/08/2025
+  * Part specific Skip trigger count added for Encoder based trigger method. Configurable through MI json under Part -> Enocoder -> Set index.
+	OPCODE "SKTRG"
+	Parameter "1"	// 1 for every single terminal trigger| 2 for every second terminal trigger | Default "1" set in TM.(command not required for every single trigger method)
+			// No of teeth remains same as sprocket. NO changes required.
+  * Light Camera sequence timing optimized (ON delay, OFF delay)
+  * Bug fix:
+	-> Disabled Hardware button indicator during Hardware button disable(HWBDB)
+	-> Buzzer Indicator turned off during press.
+	-> Stop flag, indicator disabled during Pause fail state.
+V4.1.2.2
+
+  *Rejection Logic added — New interrupt-driven rejection detection on BOTTOM_SENSOR_TRIGGER_INPUT with debounce, false-trigger filtering, and RJDNE response opcode. Called in loop().
+
+  *Reeler speed now accepts RPM — ReelerMotorSpeed1()/ReelerMotorSpeed2() convert RPM input to pulses/sec (RPM * 51200 / 60) instead of using raw values.
+
+  *Encoder angle calculation improved — EncoderInitialAngle() now calculates actual teeth count from trigger angle input via rounding, then recalculates precise trigger angles for evenly spaced triggering.
+
+  *Reeler done acknowledgement added — SerialUSB.println(Reeler_int_done) ("RHD") sent after reeler operations in RotateReelerMotor(), TOP_ISRFunction(), and BOTTOM_ISRFunction().
+
+  *Bug fixes in IET — ietBuzzeroffDR() now properly sets stop_FLAG = HIGH. dhbls() adds i2cLOW(2, 7) to disable rejection output.
+
+  *Pressure switch logic — Now retained in NexGen
+
+

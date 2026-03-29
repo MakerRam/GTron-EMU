@@ -1,0 +1,12 @@
+{
+    "Users": [
+        {
+            "Name": "Zentron",
+            "Username": "zentron",
+            "UniqueID": "9000",
+            "Password": "123",
+            "AuthenticationLevel": "Admin",
+            "AccessCredential": ""
+        }
+    ]
+}

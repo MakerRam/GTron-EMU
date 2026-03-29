@@ -1,0 +1,69 @@
+{
+    "monochromatic": true,
+    "continue_as_guest": false,
+    "pygui_parent_folder": "Inspection Statemachine//SubModules//PyGUI",
+    "roles": [
+        "Admin",
+        "Supervisor",
+        "Operator"
+    ],
+    "manage_user_window_dimension": [
+        1000,
+        920
+    ],
+    "input_field_preferences": {
+        "name": {
+            "mandatory": true,
+            "alias": "Name",
+            "min_max_characters": [
+                3,
+                18
+            ]
+        },
+        "username": {
+            "mandatory": true,
+            "alias": "Username",
+            "min_max_characters": [
+                3,
+                18
+            ]
+        },
+        "password": {
+            "mandatory": true,
+            "alias": "Password",
+            "min_max_characters": [
+                3,
+                30
+            ]
+        },
+        "uniqueid": {
+            "mandatory": true,
+            "alias": "Unique ID",
+            "min_max_characters": [
+                3,
+                12
+            ]
+        },
+        "role": {
+            "mandatory": true,
+            "alias": "Role",
+            "min_max_characters": [
+                1,
+                20
+            ]
+        }
+    },
+    "common_colors": {
+        "red_color": "#d35b5b",
+        "blue_color": "#5b9bd3",
+        "gray_color": "#727272"
+    },
+    "blue_theme": {
+        "primary_color": "#5b9bd3",
+        "accent_color": "#d35b5b"
+    },
+    "monochromatic_theme": {
+        "primary_color": "#969696",
+        "accent_color": "#969696"
+    }
+}

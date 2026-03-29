@@ -38,6 +38,21 @@ class HandshakeHandler(OpcodeHandler):
     def get_response_name(self) -> str:
         return "YES"
 
+class CommunicationBoardConfigHandler(OpcodeHandler):
+    """Handles SMINI opcode for communication board configuration"""
+    
+    def handle(self) -> bytes:
+        """Handle SMINI command - initialize communication board"""
+        logger.info("SMINI received - communication board initialized")
+        # No response expected for SMINI, return empty
+        return b''
+    
+    def get_opcode_name(self) -> str:
+        return "SMINI"
+    
+    def get_response_name(self) -> str:
+        return "(no response)"
+
 class CameraPlaceholderHandler(OpcodeHandler):
     """Placeholder for camera handlers (Phase 2)"""
     
@@ -61,6 +76,7 @@ class OpcodeDispatcher:
         """Initialize dispatcher with built-in handlers"""
         self.handlers: Dict[str, OpcodeHandler] = {
             'QUERY': HandshakeHandler(),
+            'SMINI': CommunicationBoardConfigHandler(),
             'LCS01': CameraPlaceholderHandler('LCS01'),
             'LCS02': CameraPlaceholderHandler('LCS02'),
             'LCS03': CameraPlaceholderHandler('LCS03'),

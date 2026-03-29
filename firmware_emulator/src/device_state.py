@@ -4,10 +4,11 @@ Tracks the complete state of the simulated hardware
 """
 
 from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, replace
 from typing import Dict, List, Any
 import time
 import json
+import copy
 from .logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -145,6 +146,15 @@ class DeviceState:
         """Reset device to initial state"""
         self.__init__()
         logger.info("Device state reset to initial values")
+    
+    def copy(self) -> 'DeviceState':
+        """
+        Create a deep copy of the device state.
+        
+        Returns:
+            A new DeviceState instance with copied values
+        """
+        return copy.deepcopy(self)
 
     def log_command(self, command: str):
         """Track last command received"""

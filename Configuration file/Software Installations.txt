@@ -1,0 +1,8 @@
+Software Installations required for Zengage 1.0 to work
+
+1. LabVIEW 2015 with NI Vision
+2. Arduino IDE
+3. Arduino drivers
+4. JKI Statemachine and JKI JSON from VIPM
+5. Eclipse IDE
+6. JSON plugin for Eclipse IDE

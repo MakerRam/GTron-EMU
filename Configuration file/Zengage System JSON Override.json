@@ -1,0 +1,15 @@
+{
+    "SystemParameters":{
+        "SystemName":"GTRON",
+        "SystemID":"Demo",
+        "SoftwareFeatures":{
+            "DoorPokayokeEnable":false,
+            "FailCountDisplayEnable":false,
+            "FailCountReversalEnable":true,
+            "InteractiveGuideControl":false,
+        "SetupMode":{
+                "ReelCountLimit": 1000
+            }
+        }
+    }
+}

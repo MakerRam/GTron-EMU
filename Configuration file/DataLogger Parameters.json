@@ -1,0 +1,84 @@
+{
+    "DataLoggerVersion":"2.0.1",
+    "LocalDatalogging":{
+        "EventData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"Event Data",
+            "DateFolderEnable":true,
+            "LogStampingMcID":false
+        },
+        "MasterSampleData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"Master Sample Data",
+            "RackFolderEnable":true
+        },
+        "FailData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"Fail Data",
+            "ReelFolderEnable":true,
+            "DateFolderEnable":true,
+            "RackFolderEnable":true,
+            "LogStampingMcID":true
+        },
+        "ReelData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"Reel Data",
+            "ReelFolderEnable":true,
+            "DateFolderEnable":true,
+            "RackFolderEnable":true,
+            "LogStampingMcID":true
+        },
+        "SPCData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"SPC Data",
+            "ReelFolderEnable":false,
+            "DateFolderEnable":true,
+            "RackFolderEnable":true,
+            "LogStampingMcID":true
+        },
+        "ShiftSPCData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"Shift SPC Data",
+            "DateFolderEnable":true,
+            "RackFolderEnable":true,
+            "LogStampingMcID":true
+        },
+        "MeasurementData":{
+            "InitialPath":"C:\\Users\\Public\\Documents\\Datalog\\Part Independent Data",
+            "FolderName":"Measurement Data",
+            "ReelFolderEnable":true,
+            "DateFolderEnable":true,
+            "RackFolderEnable":false,
+            "LogStampingMcID":true,
+            "NoOfDataToBeLogged":500
+        }
+    },
+    "CloudDataLogging":{
+        "DBFilePath":"A\\B\\C\\D.db",
+        "DelayBetweenTwoAPICalls":30,
+        "BatchDetails":{
+            "NumberOfRecordsToPush":15,
+            "Timeout":100000
+        },
+        "EventDetails":{
+            "NumberOfRecordsToPush":15,
+            "Timeout":100000
+        },
+        "FailureDetails":{
+            "NumberOfRecordsToPush":15,
+            "Timeout":100000
+        },
+        "IoTConfigDetails":{
+            "NumberOfRecordsToPush":15,
+            "Timeout":100000
+        },
+        "MeasurementDetails":{
+            "NumberOfRecordsToPush":15,
+            "Timeout":100000
+        },
+        "PartsMeasurementMapping":{
+            "NumberOfRecordsToPush":15,
+            "Timeout":100000
+        }
+    }
+}

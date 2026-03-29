@@ -16,10 +16,10 @@ class CommandParser:
             command_bytes: 5-byte ASCII command
             
         Returns:
-            Opcode string (e.g., 'QUERY')
+            Opcode string (e.g., 'QUERY') - normalized to uppercase
         """
         try:
-            opcode = command_bytes.decode('ascii').strip()
+            opcode = command_bytes.decode('ascii').strip().upper()
             logger.debug(f"Parsed opcode: {opcode}")
             return opcode
         except (UnicodeDecodeError, AttributeError) as e:

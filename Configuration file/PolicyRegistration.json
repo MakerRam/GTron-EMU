@@ -1,0 +1,12 @@
+{
+	"policies":[
+		{
+			"policy_name":"manage_user",
+			"policy_path":"manage_user_policy.csv"
+		},
+		{
+			"policy_name":"inspection_screen",
+			"policy_path":"inspection_policy.csv"
+		}
+	]
+}

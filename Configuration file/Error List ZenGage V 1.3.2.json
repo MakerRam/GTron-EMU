@@ -1,0 +1,540 @@
+{
+    "ErrorList":{
+        "StateMachine":[
+            {
+                "ErrorCode":"0x01000500",
+                "Description":"StateMachine Error",
+                "DisplayText":"Error Restart the System",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0100F001",
+                "Description":"JSON Validation Failed",
+                "DisplayText":"JSON Validation Failed",
+                "CounterMeasure":"JSON should be proper",
+                "SoftwareExitOnOccurance":true
+            }
+        ],
+        "RackController":[
+            {
+                "ErrorCode":"0x0200F500",
+                "Description":"Rack Controller Error",
+                "DisplayText":"Error Restart the System",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0200F501",
+                "Description":"Error in reading selected part details from JSON.",
+                "DisplayText":"Error in reading Part Details",
+                "CounterMeasure":"Check configuration for the selected part in JSON.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0200F502",
+                "Description":"Error during Terminal Tracking",
+                "DisplayText":"Error during Terminal Tracking",
+                "CounterMeasure":"Check configuration for the selected part in JSON.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0200F503",
+                "Description":"Error occured during Report Genaration",
+                "DisplayText":"Error occured during Report Genaration",
+                "CounterMeasure":"Check configuration for the selected part in JSON.",
+                "SoftwareExitOnOccurance":true
+            }
+        ],
+        "ZenCAM":[
+            {
+                "ErrorCode":"0x0F100091",
+                "Description":"The data type of the variant is not compatible with the data type wired to the type input.",
+                "DisplayText":"Variant to data conversion error while converting CC JSON to cluster",
+                "CounterMeasure":"Check the JSON Schema",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F1000FF",
+                "Description":"Unknown Error",
+                "DisplayText":"Unknown Error",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200001",
+                "Description":"Camera 1:Attribute Value is out of range",
+                "DisplayText":"Camera1: Any one of Attribute like AOI,Exposure Time,Trigger source, Gain is set wrongly",
+                "CounterMeasure":"Check the Attribute in ZenCAM by setting the same value in NI Max.and Grab.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210001",
+                "Description":"Camera 2:Attribute Value is out of range",
+                "DisplayText":"Camera2 :Any one of Attribute like AOI,Exposure Time,Trigger source, Gain is set wrongly",
+                "CounterMeasure":"Check the Attribute in ZenCAM by setting the same value in NI Max.and Grab.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220001",
+                "Description":"Camera 3:Attribute Value is out of range",
+                "DisplayText":"Camera3 : Any one of Attribute like AOI,Exposure Time,Trigger source, Gain is set wrongly",
+                "CounterMeasure":"Check the Attribute in ZenCAM by setting the same value in NI Max.and Grab.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200002",
+                "Description":"Camera 1:No Acquisition in progress",
+                "DisplayText":"Camera1: Run is given when camera is not ready to acquire",
+                "CounterMeasure":"Check if the connection are fine. And all attribute are set properly",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210002",
+                "Description":"Camera 2:No Acquisition in progress",
+                "DisplayText":"Camera2: Run is given when camera is not ready to acquire",
+                "CounterMeasure":"Check if the connection are fine. And all attribute are set properly",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220002",
+                "Description":"Camera 3:No Acquisition in progress",
+                "DisplayText":"Camera3: Run is given when camera is not ready to acquire",
+                "CounterMeasure":"Check if the connection are fine. And all attribute are set properly",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200003",
+                "Description":"Camera 1:Camera is Already in use",
+                "DisplayText":"Camera1: If Ni max is open or any other code is using the camera",
+                "CounterMeasure":"Before Starting the Software make sure Ni Max or any other software that uses camera were  closed",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210003",
+                "Description":"Camera 2:Camera is Already in use",
+                "DisplayText":"Camera2: If Ni max is open or any other code is using the camera",
+                "CounterMeasure":"Before Starting the Software make sure Ni Max or any other software that uses camera were  closed",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220003",
+                "Description":"Camera 3:Camera is Already in use",
+                "DisplayText":"Camera3: If Ni max is open or any other code is using the camera",
+                "CounterMeasure":"Before Starting the Software make sure Ni Max or any other software that uses camera were  closed",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200004",
+                "Description":"Camera 1:Camera not found",
+                "DisplayText":"Camera1: If camera USB is disconnected",
+                "CounterMeasure":"Ensure camera USB is connected.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210004",
+                "Description":"Camera 2:Camera not found",
+                "DisplayText":"Camera2: If camera USB is disconnected",
+                "CounterMeasure":"Ensure camera USB is connected.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220004",
+                "Description":"Camera 3:Camera not found",
+                "DisplayText":"Camera3: If camera USB is disconnected",
+                "CounterMeasure":"Ensure camera USB is connected.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200005",
+                "Description":"Camera 1:Invalid Camera Session",
+                "DisplayText":"Camera1: If the Session ID is wrong",
+                "CounterMeasure":"Session ID in NI Max should be as same as in ZenCAM JSON",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210005",
+                "Description":"Camera 2:Invalid Camera Session",
+                "DisplayText":"Camera2: If the Session ID is wrong",
+                "CounterMeasure":"Session ID in NI Max should be as same as in ZenCAM JSON",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220005",
+                "Description":"Camera 3:Invalid Camera Session",
+                "DisplayText":"Camera3: If the Session ID is wrong",
+                "CounterMeasure":"Session ID in NI Max should be as same as in ZenCAM JSON",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200006",
+                "Description":"Camera 1:Invalid pointer",
+                "DisplayText":"Camera1: Image pointer in ZenCAM is wrong, can happen in offline if the image is not available",
+                "CounterMeasure":"",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210006",
+                "Description":"Camera 2:Invalid pointer",
+                "DisplayText":"Camera2: Image pointer in ZenCAM is wrong, can happen in offline if the image is not available",
+                "CounterMeasure":"",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220006",
+                "Description":"Camera 3:Invalid pointer",
+                "DisplayText":"Camera3: Image pointer in ZenCAM is wrong, can happen in offline if the image is not available",
+                "CounterMeasure":"",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F200007",
+                "Description":"Camera 1:Invalid offline image folder",
+                "DisplayText":"Camera1: Wrong or invalid offline path. Check ZenCAM JSON.",
+                "CounterMeasure":"",
+                "SoftwareExitOnOccurance":false
+            },
+            {
+                "ErrorCode":"0x0F210007",
+                "Description":"Camera 2:Invalid offline image folder",
+                "DisplayText":"Camera2:Wrong or invalid offline path. Check ZenCAM JSON.",
+                "CounterMeasure":"",
+                "SoftwareExitOnOccurance":false
+            },
+            {
+                "ErrorCode":"0x0F220007",
+                "Description":"Camera 3:Invalid offline image folder",
+                "DisplayText":"Camera3:Wrong or invalid offline path. Check ZenCAM JSON.",
+                "CounterMeasure":"",
+                "SoftwareExitOnOccurance":false
+            },
+            {
+                "ErrorCode":"0x0F200091",
+                "Description":"Camera 1:The data type of the variant is not compatible with data type wired to the input.",
+                "DisplayText":"Camera1: Variant to data conversion error while converting JSON to cluster",
+                "CounterMeasure":"Check the JSON Schema",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F210091",
+                "Description":"Camera 2:The data type of the variant is not compatible with data type wired to the input.",
+                "DisplayText":"Camera2: Variant to data conversion error while converting JSON to cluster",
+                "CounterMeasure":"Check the JSON Schema",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F220091",
+                "Description":"Camera 3:The data type of the variant is not compatible with data type wired to the input.",
+                "DisplayText":"Camera3: Variant to data conversion error while converting JSON to cluster",
+                "CounterMeasure":"Check the JSON Schema",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F2000FF",
+                "Description":"Camera 1:Unknown Error",
+                "DisplayText":"Camera1: Unknown Error Occured ",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F2100FF",
+                "Description":"Camera 2:Unknown Error",
+                "DisplayText":"Camera2: Unknown Error Occured ",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0F2200FF",
+                "Description":"Camera 3:Unknown Error",
+                "DisplayText":"Camera3: Unknown Error Occured ",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            }
+        ],
+        "Algorithm":[
+            {
+                "ErrorCode":"0x0700F001",
+                "Description":"Error in reading Algorithm JSON.",
+                "DisplayText":"Error in reading Algorithm JSON",
+                "CounterMeasure":"Check Algorithm JSON Configurations",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0700F002",
+                "Description":"Error in reading selected part Algorithm details from JSON.",
+                "DisplayText":"Error in reading Part Details",
+                "CounterMeasure":"Check configuration for the selected part in JSON.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0700F003",
+                "Description":"Incorrect calibration file path in JSON.",
+                "DisplayText":"Incorrect calibration file path",
+                "CounterMeasure":"Calibration file in JSON should be proper.",
+                "SoftwareExitOnOccurance":true
+            }
+        ],
+        "MachineInterface":[
+            {
+                "ErrorCode":"0x03000100",
+                "Description":"Arduino Com Port not available",
+                "DisplayText":"Timing Unit Unavailable Check Hardware Connection and Restart the System",
+                "CounterMeasure":"Check USB connection with Arduino",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000101",
+                "Description":"Arduino not responding to Ping message",
+                "DisplayText":"Timing Unit Unavailable Check Hardware Connection and Restart the System",
+                "CounterMeasure":"Restart the software Application",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000102",
+                "Description":"Wrong opcode sent to Arduino",
+                "DisplayText":"Machine Interface Configuration Error Restart System",
+                "CounterMeasure":"Check for the correctness of opcodes in MachineInterfaceRecipeOpcodes",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000103",
+                "Description":"Unknown response from Timing Unit",
+                "DisplayText":"Hardware Error Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000104",
+                "Description":"Timing Unit got disconnected. The given session or object reference is invalid.",
+                "DisplayText":"Hardware Error Restart the System",
+                "CounterMeasure":"Restart the application",
+                "SoftwareExitOnOccurance":false
+            },
+            {
+                "ErrorCode":"0x03000105",
+                "Description":"Unknown Error",
+                "DisplayText":"Hardware Error Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000106",
+                "Description":"Timeout expired before operation completed",
+                "DisplayText":"Hardware Error Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000107",
+                "Description":"The resource is valid, but VISA cannot currently access it",
+                "DisplayText":"Hardware Error Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000108",
+                "Description":"The connection for the given session has been lost",
+                "DisplayText":"Hardware Error Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000001",
+                "Description":"Software compatibility error",
+                "DisplayText":"Machine Interface Configuration File Version Mismatch Error. Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000002",
+                "Description":"Variant to Data conversion error. Check configuration file structure.",
+                "DisplayText":"Configuration File Error Restart the System",
+                "CounterMeasure":"NA",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000200",
+                "Description":"Guide opening Fail during Motor POST or Diagnostics",
+                "DisplayText":"Guides Failed to Open Check Motor",
+                "CounterMeasure":"Check functionality of Limit Switch. Check in JSON that Limit switch is enabled. Check Power supply.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000201",
+                "Description":"Guide opening Fail during Stop State",
+                "DisplayText":"Guides Failed to Open Check Motor",
+                "CounterMeasure":"Check functionality of Limit Switch. Check in JSON that Limit switch is enabled. Check Power supply.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000202",
+                "Description":"Guide opening Fail during Software Exit State",
+                "DisplayText":"Guides Failed to Open Check Motor",
+                "CounterMeasure":"Check functionality of Limit Switch. Check in JSON that Limit switch is enabled. Check Power supply.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000203",
+                "Description":"Guide opening Fail during Select State",
+                "DisplayText":"Guides Failed to Open Check Motor",
+                "CounterMeasure":"Check functionality of Limit Switch. Check in JSON that Limit switch is enabled. Check Power supply.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000300",
+                "Description":"Guide closing Fail during Motor POST or Diagnostics",
+                "DisplayText":"Guides Failed to Close Check Motor",
+                "CounterMeasure":"Check functionality of Limit Switch. Check in JSON that Limit switch is enabled. Check Power supply.",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000400",
+                "Description":"Guides failed to reach Ready to Insert position",
+                "DisplayText":"Guides Failed to Insert Position Check Motor",
+                "CounterMeasure":"Check Arduino connection and Power supply",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000401",
+                "Description":"Guides failed to reach Ready to Run position",
+                "DisplayText":"Guides Failed to Run Position Check Motor",
+                "CounterMeasure":"Check Arduino connection and Power supply",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x03000501",
+                "Description":"Machine not powered ON",
+                "DisplayText":"Machine is not powered ON Power ON the system",
+                "CounterMeasure":"Power ON the system",
+                "SoftwareExitOnOccurance":true
+            }
+        ],
+        "UserInterface":[
+            {
+                "ErrorCode":"0x0600000F",
+                "Description":"UserInterface Unknown error",
+                "DisplayText":"Unknown error",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x06000000",
+                "Description":"Closed loading bar reference and again the command been sent to close the loading bar, but cannot be closed again",
+                "DisplayText":"Loading Bar reference",
+                "CounterMeasure":"Check Loading bar reference is already closed before closing it again",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x06000001",
+                "Description":"Invalid value for Property",
+                "DisplayText":"Input Parameter is invalid for the Property Node",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x06000002",
+                "Description":"Property Node reference not available to update data for the controls",
+                "DisplayText":"Property Node reference not available",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x06000003",
+                "Description":"JSON data type is incorrect. JSON file structure is not matching with defined JSON data cluster",
+                "DisplayText":"JSON structure and Defined JSON cluster is not matching",
+                "CounterMeasure":"Check JSON structure and JSON data type",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x06000004",
+                "Description":"Monitor Connection issue",
+                "DisplayText":"Either Monitor 1 or Monitor 2 is not found",
+                "CounterMeasure":"Check that both monitors are connected",
+                "SoftwareExitOnOccurance":false
+            },
+            {
+                "ErrorCode":"0x06000005",
+                "Description":"Json Save issue while writing",
+                "DisplayText":"Unable to save the changes",
+                "CounterMeasure":"Check if the part name contains any unsupported special characters",
+                "SoftwareExitOnOccurance":false
+            }
+        ],
+        "Datalogger":[
+            {
+                "ErrorCode":"0x05000001",
+                "Description":"DataLogger Error",
+                "DisplayText":"Error Restart the System",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":false
+            }
+        ],
+        "ZenAnalytics":[
+            {
+                "ErrorCode":"0x0E00A001",
+                "Description":"JSON file path not proper",
+                "DisplayText":"File name or File location may not be the same",
+                "CounterMeasure":"Check JSON file path or File name",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0E00A002",
+                "Description":"JSON data type is incorrect. JSON file structure is not matching with defined JSON data cluster",
+                "DisplayText":"JSON structure and Defined JOSN cluster is not matching",
+                "CounterMeasure":"Check JSON structure and JOSN data type",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0E00A003",
+                "Description":"User selected part name and configuration part name is not matching",
+                "DisplayText":"Part name Mismatch",
+                "CounterMeasure":"Check Initialization data",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0E00A004",
+                "Description":"Graph reference not been sent from analytics UI",
+                "DisplayText":"Graph reference not available",
+                "CounterMeasure":"Check all charts and Cp Cpk table reference",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0E00A005",
+                "Description":"JSON is not read",
+                "DisplayText":"Object reference is invalid. After editing the part details analytics should recieve json read command to re read the json and use modified data",
+                "CounterMeasure":"Re send the JSON read command and initialization data",
+                "SoftwareExitOnOccurance":true
+            }
+        ],
+        "Popup":[
+            {
+                "ErrorCode":"0x08000001",
+                "Description":"PyView Error from Popup",
+                "DisplayText":"Module not Found",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x08000002",
+                "Description":"PyView Error from Popup",
+                "DisplayText":"Functional or Logical Errors",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x08000003",
+                "Description":"PyView Error from Popup",
+                "DisplayText":"PyView Crash",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            },
+            {
+                "ErrorCode":"0x0800000F",
+                "Description":"PyView Error from Popup",
+                "DisplayText":"Unknown Error",
+                "CounterMeasure":"Restart the System",
+                "SoftwareExitOnOccurance":true
+            }
+        ]
+    }
+}
