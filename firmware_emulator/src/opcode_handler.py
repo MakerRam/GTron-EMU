@@ -603,6 +603,65 @@ class OpcodeHandler:
         
         self.register("HWBDB", handle_hwbdb)
         
+        # ===== MISSING SPECIFICATION OPCODES =====
+        def handle_run(state: DeviceState) -> Tuple[str, DeviceState]:
+            """RUN: Run/Start machine command."""
+            return "", state
+        
+        self.register("RUN", handle_run)
+        
+        def handle_stp(state: DeviceState) -> Tuple[str, DeviceState]:
+            """STP: Stop machine command."""
+            return "", state
+        
+        self.register("STP", handle_stp)
+        
+        def handle_pau(state: DeviceState) -> Tuple[str, DeviceState]:
+            """PAU: Pause machine command."""
+            return "", state
+        
+        self.register("PAU", handle_pau)
+        
+        def handle_bof(state: DeviceState) -> Tuple[str, DeviceState]:
+            """BOF: Buzzer off."""
+            new_state = state.copy()
+            new_state.lamps.buzzer = False
+            return "", new_state
+        
+        self.register("BOF", handle_bof)
+        
+        def handle_bofdr(state: DeviceState) -> Tuple[str, DeviceState]:
+            """BOFDR: Buzzer off debug response."""
+            return "", state
+        
+        self.register("BOFDR", handle_bofdr)
+        
+        def handle_bofer(state: DeviceState) -> Tuple[str, DeviceState]:
+            """BOFER: Buzzer off error response."""
+            return "FLS", state
+        
+        self.register("BOFER", handle_bofer)
+        
+        def handle_dul(state: DeviceState) -> Tuple[str, DeviceState]:
+            """DUL: Door unlock."""
+            new_state = state.copy()
+            new_state.door_locked = False
+            return "", new_state
+        
+        self.register("DUL", handle_dul)
+        
+        def handle_grd(state: DeviceState) -> Tuple[str, DeviceState]:
+            """GRD: Ground/Reference command."""
+            return "", state
+        
+        self.register("GRD", handle_grd)
+        
+        def handle_mirsp(state: DeviceState) -> Tuple[str, DeviceState]:
+            """MIRSP: Machine interface response."""
+            return "", state
+        
+        self.register("MIRSP", handle_mirsp)
+        
         # ===== ERROR HANDLING =====
         def handle_fls(state: DeviceState) -> Tuple[str, DeviceState]:
             """FLS: Failed/Error response (standard failure response)."""
