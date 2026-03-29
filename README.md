@@ -4,7 +4,7 @@ A comprehensive emulator for the GTRON vision system firmware that allows LabVIE
 
 ## Overview
 
-This emulator implements the complete firmware API (70+ opcodes) over a virtual COM port, enabling:
+This emulator implements the complete firmware API (61 opcodes) over a virtual COM port, enabling:
 - Full communication protocol compliance (5-byte ASCII at 9600 baud)
 - Device state machine with realistic command handling
 - Virtual camera simulation with frame capture
@@ -14,12 +14,14 @@ This emulator implements the complete firmware API (70+ opcodes) over a virtual 
 
 ## Phase 1 Scope
 
-- **Firmware API**: All opcode handlers (device readiness, sensors, light-camera, lamps, motors, encoders)
+- **Firmware API**: All 61 opcode handlers (device readiness, sensors, light-camera, lamps, motors, encoders)
 - **Serial Communication**: Virtual COM port via com0com, pyserial transport
 - **Virtual Camera**: Synthetic image generation with metadata (timestamp, trigger count, camera ID)
 - **Device State**: Immutable state machine with command-driven transitions
 - **Configuration**: Machine Interface Parameters.json parsing
 - **Top Rack Only**: 3 cameras (Top, Side, Front); Bottom Rack deferred to Phase 2
+
+See **OPCODES_REFERENCE.md** for complete documentation of all 61 implemented opcodes.
 
 ## Installation
 
