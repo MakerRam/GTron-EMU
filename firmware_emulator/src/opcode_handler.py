@@ -132,17 +132,17 @@ class OpcodeHandler:
             """tpGOP: Open top guide motor."""
             new_state = state.copy()
             new_state.guide_top.position = GuidePosition.OPEN
-            return "tpGOR", new_state  # tpGOR = Guide Open Response
+            return "TPGOR", new_state  # TPGOR = Guide Open Response
         
-        self.register("tpGOP", handle_tpgop)
+        self.register("TPGOP", handle_tpgop)
         
         def handle_tpgcl(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpGCL: Close top guide motor."""
             new_state = state.copy()
             new_state.guide_top.position = GuidePosition.CLOSED
-            return "tpGCR", new_state  # tpGCR = Guide Close Response
+            return "TPGCR", new_state  # TPGCR = Guide Close Response
         
-        self.register("tpGCL", handle_tpgcl)
+        self.register("TPGCL", handle_tpgcl)
         
         def handle_tprtr(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpRTR: Rotate top reeler motor."""
@@ -150,25 +150,25 @@ class OpcodeHandler:
             new_state.reeler_top.running = True
             return "", new_state
         
-        self.register("tpRTR", handle_tprtr)
+        self.register("TPRTR", handle_tprtr)
         
         def handle_tpgdi(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpGDI: Set guide distance index (motor steps for ready positions)."""
             # Phase 1: Accept command without parameters
             return "", state
         
-        self.register("tpGDI", handle_tpgdi)
+        self.register("TPGDI", handle_tpgdi)
         
         # ===== LIMIT SWITCH STATUS (TOP) =====
         def handle_tplsc(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpLSC: Check top limit switch status."""
             # Check if at limit position
             if state.guide_top.reached_limit:
-                return "tpOL1", state  # Limit pressed
+                return "TPOL1", state  # Limit pressed
             else:
-                return "tpOL0", state  # Limit not pressed
+                return "TPOL0", state  # Limit not pressed
         
-        self.register("tpLSC", handle_tplsc)
+        self.register("TPLSC", handle_tplsc)
         
         # ===== SENSOR CONTROL (TOP) =====
         def handle_tpats(state: DeviceState) -> Tuple[str, DeviceState]:
@@ -178,7 +178,7 @@ class OpcodeHandler:
             new_state.sensor_top.powered = True
             return "", new_state
         
-        self.register("tpATS", handle_tpats)
+        self.register("TPATS", handle_tpats)
         
         def handle_tpdts(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpDTS: Detach/Disable top sensor."""
@@ -187,7 +187,7 @@ class OpcodeHandler:
             new_state.sensor_top.powered = False
             return "", new_state
         
-        self.register("tpDTS", handle_tpdts)
+        self.register("TPDTS", handle_tpdts)
         
         # ===== ENCODER CONTROL (TOP) =====
         def handle_tpeni(state: DeviceState) -> Tuple[str, DeviceState]:
@@ -196,7 +196,7 @@ class OpcodeHandler:
             new_state.encoder_top.initialized = True
             return "", new_state
         
-        self.register("tpENI", handle_tpeni)
+        self.register("TPENI", handle_tpeni)
         
         def handle_tpeen(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpEEN: Enable top encoder."""
@@ -204,7 +204,7 @@ class OpcodeHandler:
             new_state.encoder_top.enabled = True
             return "", new_state
         
-        self.register("tpEEN", handle_tpeen)
+        self.register("TPEEN", handle_tpeen)
         
         def handle_tpedb(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpEDB: Disable top encoder."""
@@ -212,7 +212,7 @@ class OpcodeHandler:
             new_state.encoder_top.enabled = False
             return "", new_state
         
-        self.register("tpEDB", handle_tpedb)
+        self.register("TPEDB", handle_tpedb)
         
         def handle_tprsp(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpRSP: Set encoder starting position."""
@@ -220,7 +220,7 @@ class OpcodeHandler:
             new_state.encoder_top.position = 0
             return "", new_state
         
-        self.register("tpRSP", handle_tprsp)
+        self.register("TPRSP", handle_tprsp)
         
         def handle_tprth(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpRTH: Set encoder teeth/resolution."""
@@ -228,7 +228,7 @@ class OpcodeHandler:
             # Parse teeth count if provided (Phase 2)
             return "", new_state
         
-        self.register("tpRTH", handle_tprth)
+        self.register("TPRTH", handle_tprth)
         
         def handle_tpina(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpINA: Set encoder index."""
@@ -236,24 +236,24 @@ class OpcodeHandler:
             new_state.encoder_top.initial_angle = 0
             return "", new_state
         
-        self.register("tpINA", handle_tpina)
+        self.register("TPINA", handle_tpina)
         
         # ===== GUIDE MOTOR CONTROL (BOTTOM) =====
         def handle_bmgop(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmGOP: Open bottom guide motor."""
             new_state = state.copy()
             new_state.guide_bottom.position = GuidePosition.OPEN
-            return "bmGOR", new_state
+            return "BMGOR", new_state
         
-        self.register("bmGOP", handle_bmgop)
+        self.register("BMGOP", handle_bmgop)
         
         def handle_bmgcl(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmGCL: Close bottom guide motor."""
             new_state = state.copy()
             new_state.guide_bottom.position = GuidePosition.CLOSED
-            return "bmGCR", new_state
+            return "BMGCR", new_state
         
-        self.register("bmGCL", handle_bmgcl)
+        self.register("BMGCL", handle_bmgcl)
         
         def handle_bmrtr(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmRTR: Rotate bottom reeler motor."""
@@ -261,23 +261,23 @@ class OpcodeHandler:
             new_state.reeler_bottom.running = True
             return "", new_state
         
-        self.register("bmRTR", handle_bmrtr)
+        self.register("BMRTR", handle_bmrtr)
         
         def handle_bmgdi(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmGDI: Set bottom guide distance index."""
             return "", state
         
-        self.register("bmGDI", handle_bmgdi)
+        self.register("BMGDI", handle_bmgdi)
         
         # ===== LIMIT SWITCH STATUS (BOTTOM) =====
         def handle_bmlsc(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmLSC: Check bottom limit switch status."""
             if state.guide_bottom.reached_limit:
-                return "bmOL1", state
+                return "BMOL1", state
             else:
-                return "bmOL0", state
+                return "BMOL0", state
         
-        self.register("bmLSC", handle_bmlsc)
+        self.register("BMLSC", handle_bmlsc)
         
         # ===== SENSOR CONTROL (BOTTOM) =====
         def handle_bmats(state: DeviceState) -> Tuple[str, DeviceState]:
@@ -287,7 +287,7 @@ class OpcodeHandler:
             new_state.sensor_bottom.powered = True
             return "", new_state
         
-        self.register("bmATS", handle_bmats)
+        self.register("BMATS", handle_bmats)
         
         def handle_bmdts(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmDTS: Detach/Disable bottom sensor."""
@@ -296,7 +296,7 @@ class OpcodeHandler:
             new_state.sensor_bottom.powered = False
             return "", new_state
         
-        self.register("bmDTS", handle_bmdts)
+        self.register("BMDTS", handle_bmdts)
         
         # ===== ENCODER CONTROL (BOTTOM) =====
         def handle_bmeni(state: DeviceState) -> Tuple[str, DeviceState]:
@@ -305,7 +305,7 @@ class OpcodeHandler:
             new_state.encoder_bottom.initialized = True
             return "", new_state
         
-        self.register("bmENI", handle_bmeni)
+        self.register("BMENI", handle_bmeni)
         
         def handle_bmeen(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmEEN: Enable bottom encoder."""
@@ -313,7 +313,7 @@ class OpcodeHandler:
             new_state.encoder_bottom.enabled = True
             return "", new_state
         
-        self.register("bmEEN", handle_bmeen)
+        self.register("BMEEN", handle_bmeen)
         
         def handle_bmedb(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmEDB: Disable bottom encoder."""
@@ -321,7 +321,7 @@ class OpcodeHandler:
             new_state.encoder_bottom.enabled = False
             return "", new_state
         
-        self.register("bmEDB", handle_bmedb)
+        self.register("BMEDB", handle_bmedb)
         
         def handle_bmrsp(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmRSP: Set bottom encoder starting position."""
@@ -329,13 +329,13 @@ class OpcodeHandler:
             new_state.encoder_bottom.position = 0
             return "", new_state
         
-        self.register("bmRSP", handle_bmrsp)
+        self.register("BMRSP", handle_bmrsp)
         
         def handle_bmrth(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmRTH: Set bottom encoder teeth/resolution."""
             return "", state
         
-        self.register("bmRTH", handle_bmrth)
+        self.register("BMRTH", handle_bmrth)
         
         def handle_bmina(state: DeviceState) -> Tuple[str, DeviceState]:
             """bmINA: Set bottom encoder index."""
@@ -343,7 +343,7 @@ class OpcodeHandler:
             new_state.encoder_bottom.initial_angle = 0
             return "", new_state
         
-        self.register("bmINA", handle_bmina)
+        self.register("BMINA", handle_bmina)
         
         # ===== LIGHT & CAMERA SEQUENCES =====
         def handle_lcs01(state: DeviceState) -> Tuple[str, DeviceState]:
@@ -381,7 +381,7 @@ class OpcodeHandler:
             new_state.cameras.active_sequence = -1  # All
             return "", new_state
         
-        self.register("LCStp", handle_lcstp)
+        self.register("LCSTP", handle_lcstp)
         
         def handle_lcsbm(state: DeviceState) -> Tuple[str, DeviceState]:
             """LCSbm: Trigger bottom light-camera sequences."""
@@ -392,7 +392,7 @@ class OpcodeHandler:
             new_state.cameras.active_sequence = 2  # Bottom
             return "", new_state
         
-        self.register("LCSbm", handle_lcsbm)
+        self.register("LCSBM", handle_lcsbm)
         
         # ===== SENSOR POWER CONTROL =====
         def handle_pos01(state: DeviceState) -> Tuple[str, DeviceState]:
@@ -542,7 +542,7 @@ class OpcodeHandler:
         def handle_tpstr(state: DeviceState) -> Tuple[str, DeviceState]:
             """tpSTR: Status/State response."""
             # This is a response opcode, not typically called
-            return "tpSTR", state
+            return "TPSTR", state
         
         self.register("tpSTR", handle_tpstr)
         
