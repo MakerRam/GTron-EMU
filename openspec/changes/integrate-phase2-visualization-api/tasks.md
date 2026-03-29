@@ -109,22 +109,22 @@
 
 ## 12. Documentation
 
-- [ ] 12.1 Document API endpoints in README: /health, /api/state, /api/state/summary
-- [ ] 12.2 Document state JSON schema with example responses
-- [ ] 12.3 Document visualizer usage: how to open, mock vs live modes, API URL configuration
-- [ ] 12.4 Document deployment options: same machine, network, Docker (future)
-- [ ] 12.5 Create quick-start guide: "Get visualization up in 5 minutes"
-- [ ] 12.6 Add troubleshooting section: common issues and solutions
-- [ ] 12.7 Document CORS configuration and security considerations
+- [x] 12.1 Document API endpoints in README: /health, /api/state, /api/state/summary
+- [x] 12.2 Document state JSON schema with example responses
+- [x] 12.3 Document visualizer usage: how to open, mock vs live modes, API URL configuration
+- [x] 12.4 Document deployment options: same machine, network, Docker (future)
+- [x] 12.5 Create quick-start guide: "Get visualization up in 5 minutes"
+- [x] 12.6 Add troubleshooting section: common issues and solutions
+- [x] 12.7 Document CORS configuration and security considerations
 
-## 13. Code Review & Cleanup
+## 13. Code Review
 
-- [ ] 13.1 Review all code changes for style consistency
-- [ ] 13.2 Verify no debug statements or print() calls left in code
-- [ ] 13.3 Verify all imports are correct and tested
-- [ ] 13.4 Verify no hardcoded values (use command-line args instead)
-- [ ] 13.5 Remove any test files or temporary scripts from repository
-- [ ] 13.6 Verify .gitignore includes: __pycache__/, *.pyc, .venv/, .pytest_cache/
+- [x] 13.1 Review all code changes for style consistency
+- [x] 13.2 Verify no debug statements or print() calls left in code
+- [x] 13.3 Verify all imports are correct and tested
+- [x] 13.4 Verify no hardcoded values (use command-line args instead)
+- [x] 13.5 Remove any test files or temporary scripts from repository
+- [x] 13.6 Verify .gitignore includes: __pycache__/, *.pyc, .venv/, .pytest_cache/
 
 ## 14. Final Verification
 
