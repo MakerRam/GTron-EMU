@@ -26,7 +26,7 @@ from firmware_emulator.src.device_state import DeviceState
 logger = logging.getLogger(__name__)
 
 
-def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str, DeviceState], Tuple[str, DeviceState]]] = None, device_state_ref: Optional[list] = None, param_command_handler: Optional[Callable] = None) -> Flask:
+def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str, DeviceState], Tuple[str, DeviceState]]] = None, device_state_ref: Optional[list] = None, param_command_handler: Optional[Callable] = None, serial_write: Optional[Callable[[bytes], bool]] = None) -> Flask:
     """Create and configure Flask application.
 
     Args:
@@ -34,6 +34,8 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
         command_handler: Optional callable to process commands
         device_state_ref: Optional list [DeviceState] for command injection
         param_command_handler: Optional callable(opcode, state, param) for param opcodes
+        serial_write: Optional callable(bytes) -> bool to write response frames
+                      to the serial port so LabVIEW receives them.
 
     Returns:
         Configured Flask app with routes and CORS enabled.
@@ -123,6 +125,14 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
             
             primary_response = responses[0] if responses else ""
             
+            # Write response frames to serial port so LabVIEW receives them
+            if serial_write and responses:
+                for resp_str in responses:
+                    frame = resp_str.encode('ascii').ljust(5, b' ')[:5]
+                    ok = serial_write(frame)
+                    logger.info(f"[SERIAL-TX via API] {resp_str!r} -> {frame!r} (ok={ok})")
+                    print(f"[SERIAL-TX via API] {resp_str!r} -> {frame!r} (ok={ok})", flush=True)
+            
             print(f"[DBG-API] /api/command: done. response={primary_response!r}, all={responses!r}", flush=True)
             logger.info(f"Command processed: {opcode} -> {responses}")
             return jsonify({
@@ -159,8 +169,9 @@ class APIServer:
         command_handler: Optional[Callable[[str, DeviceState], Tuple[str, DeviceState]]] = None,
         device_state_ref: Optional[list] = None,
         param_command_handler: Optional[Callable] = None,
+        serial_write: Optional[Callable[[bytes], bool]] = None,
     ):
-        self._app = create_app(exporter, command_handler, device_state_ref, param_command_handler)
+        self._app = create_app(exporter, command_handler, device_state_ref, param_command_handler, serial_write)
         self._port = port
         self._host = host
         self._thread: Optional[threading.Thread] = None

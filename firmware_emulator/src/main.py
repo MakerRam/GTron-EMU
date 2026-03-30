@@ -59,6 +59,7 @@ class EmulatorEngine:
                 command_handler=self.opcode_handler.dispatch,
                 device_state_ref=[self.device_state],
                 param_command_handler=self.opcode_handler.dispatch_with_param,
+                serial_write=self.serial_bridge.write_response,
             )
         
         logger.info(f"Emulator engine initialized on {port}")

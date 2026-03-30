@@ -812,6 +812,10 @@ class OpcodeHandler:
             ns.button_flags.pause = True
             ns.button_flags.stop = True
             ns.button_flags.buzzeroff = False
+            ns.button_lamps.run = False
+            ns.button_lamps.pause = True
+            ns.button_lamps.stop = True
+            ns.button_lamps.buzzer = False
             ns.lamps.green = True
             ns.lamps.yellow = False
             ns.lamps.red = False
@@ -826,6 +830,10 @@ class OpcodeHandler:
             ns.button_flags.run = False
             ns.button_flags.pause = True
             ns.button_flags.stop = True
+            ns.button_lamps.run = False
+            ns.button_lamps.pause = True
+            ns.button_lamps.stop = True
+            ns.button_lamps.buzzer = False
             ns.lamps.green = True
             ns.lamps.yellow = False
             ns.lamps.red = False
@@ -840,6 +848,10 @@ class OpcodeHandler:
             ns.button_flags.pause = False
             ns.button_flags.stop = True
             ns.button_flags.buzzeroff = False
+            ns.button_lamps.run = True
+            ns.button_lamps.pause = False
+            ns.button_lamps.stop = True
+            ns.button_lamps.buzzer = False
             ns.lamps.green = False
             ns.lamps.yellow = True
             ns.lamps.red = False
@@ -856,6 +868,10 @@ class OpcodeHandler:
             ns.button_flags.pause = False
             ns.button_flags.stop = False
             ns.button_flags.buzzeroff = True
+            ns.button_lamps.run = False
+            ns.button_lamps.pause = False
+            ns.button_lamps.stop = False
+            ns.button_lamps.buzzer = True
             ns.lamps.green = False
             ns.lamps.yellow = False
             ns.lamps.red = True
