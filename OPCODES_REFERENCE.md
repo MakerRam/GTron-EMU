@@ -170,7 +170,7 @@ Complete reference of all 75 firmware opcodes implemented in the emulator.
 #### BOFDR
 **Type**: Specification Required  
 **Purpose**: Buzzer off debug response  
-**Response**: (empty)  
+**Response**: (empty)  /ses
 **State Changes**: None  
 **Usage**: Debug response for buzzer control  
 **Protocol**: 5-byte ASCII
