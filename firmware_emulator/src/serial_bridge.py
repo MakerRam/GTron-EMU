@@ -139,6 +139,82 @@ class SerialBridge:
             logger.error(f"Error reading from serial port: {e}")
             return None
     
+    def read_param(self) -> Optional[str]:
+        """Read a variable-length numeric parameter from the serial buffer.
+        
+        LabVIEW sends parameter values as variable-length ASCII digit strings
+        (e.g., "50000", "10", "0") immediately after a param opcode frame.
+        The parameter ends when a non-digit byte is encountered (the start
+        of the next opcode) or when no more data arrives (timeout).
+        
+        This method:
+          1. Drains all available bytes from the serial port into the buffer.
+          2. If buffer is empty, does a blocking read to wait for data.
+          3. Extracts consecutive ASCII digit bytes (0x30-0x39) from the
+             front of the buffer. Non-digit bytes are left for the next
+             read_command() call.
+        
+        Returns:
+            Parameter string (e.g., "50000") if digits found, None on timeout.
+        """
+        try:
+            # Step 1: Drain all available bytes into the buffer
+            waiting = self._port.in_waiting
+            if waiting > 0:
+                chunk = self._port.read(waiting)
+                if chunk:
+                    self._read_buffer.extend(chunk)
+            
+            # Step 2: Strip leading newlines / carriage returns
+            while self._read_buffer and self._read_buffer[0] in (0x0A, 0x0D):
+                self._read_buffer.pop(0)
+            
+            # Step 3: If buffer is empty, do a blocking read
+            if len(self._read_buffer) == 0:
+                data = self._port.read(1)
+                if not data:
+                    return None  # Timeout
+                self._read_buffer.extend(data)
+                
+                # Strip newlines
+                while self._read_buffer and self._read_buffer[0] in (0x0A, 0x0D):
+                    self._read_buffer.pop(0)
+                
+                if len(self._read_buffer) == 0:
+                    return None
+            
+            # Step 4: If the first byte is NOT a digit, there's no param —
+            # the next opcode arrived immediately.
+            if self._read_buffer[0] < 0x30 or self._read_buffer[0] > 0x39:
+                logger.warning("read_param: first byte is not a digit, no param available")
+                return None
+            
+            # Step 5: Drain more bytes to capture the full param value.
+            # We do a short blocking read to ensure we get all digits that
+            # LabVIEW sends in this burst before the next opcode starts.
+            # After the initial drain, try one more drain pass.
+            waiting = self._port.in_waiting
+            if waiting > 0:
+                chunk = self._port.read(waiting)
+                if chunk:
+                    self._read_buffer.extend(chunk)
+            
+            # Step 6: Extract consecutive digit bytes from the front
+            param_bytes = bytearray()
+            while self._read_buffer and 0x30 <= self._read_buffer[0] <= 0x39:
+                param_bytes.append(self._read_buffer.pop(0))
+            
+            if not param_bytes:
+                return None
+            
+            param_str = param_bytes.decode('ascii')
+            logger.debug(f"Param read: {param_str!r} (remaining buffer: {len(self._read_buffer)} bytes)")
+            return param_str
+            
+        except Exception as e:
+            logger.error(f"Error reading param from serial port: {e}")
+            return None
+    
     def write_response(self, response: bytes) -> bool:
         """Write response to serial port.
         

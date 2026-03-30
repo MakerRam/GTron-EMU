@@ -170,18 +170,24 @@ class EmulatorEngine:
                     if CommandParser.is_valid_command(cmd_bytes):
                         opcode = CommandParser.parse(cmd_bytes).upper()
                         if opcode in PARAM_OPCODES:
-                            # Read the second 5-byte frame containing the parameter
-                            param_bytes = self.serial_bridge.read_command()
-                            if param_bytes is not None:
-                                param_str = param_bytes.decode('ascii', errors='replace').strip()
-                                print(f"[DBG-SERIAL] param frame: {param_bytes!r} -> {param_str!r}", flush=True)
-                            else:
-                                logger.warning(f"Param opcode {opcode}: no parameter frame received (timeout)")
+                            # Read variable-length numeric parameter
+                            param_str = self.serial_bridge.read_param() or ""
+                            logger.info(f"[SERIAL-RX] opcode={opcode} param={param_str!r}")
+                            print(f"[SERIAL-RX] opcode={opcode} param={param_str!r}", flush=True)
+                        else:
+                            logger.info(f"[SERIAL-RX] opcode={opcode}")
+                            print(f"[SERIAL-RX] opcode={opcode}", flush=True)
+                    else:
+                        logger.warning(f"[SERIAL-RX] invalid frame: {cmd_bytes!r}")
+                        print(f"[SERIAL-RX] invalid frame: {cmd_bytes!r}", flush=True)
 
                     response_frames = self._process_command(cmd_bytes, param_str)
                     
                     for frame in response_frames:
                         if self.serial_bridge.write_response(frame):
+                            resp_str = frame.decode('ascii', errors='replace').strip()
+                            logger.info(f"[SERIAL-TX] {resp_str!r}")
+                            print(f"[SERIAL-TX] -> {resp_str!r}", flush=True)
                             self._log_transaction(cmd_bytes, frame)
                         else:
                             logger.error("Failed to send response")

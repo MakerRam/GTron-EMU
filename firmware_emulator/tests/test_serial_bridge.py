@@ -338,3 +338,138 @@ class TestSerialBridge:
         # Buffer has 'DH', blocking read adds 'BLS'
         cmd2 = bridge.read_command()
         assert cmd2 == b'DHBLS'
+
+    # ------------------------------------------------------------------
+    # read_param: variable-length numeric parameter extraction
+    # ------------------------------------------------------------------
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_read_param_5digit(self, mock_serial):
+        """5-digit param already in buffer → extracted correctly."""
+        bridge, mock_port = _make_bridge(mock_serial, in_waiting_sequence=[5, 0])
+        mock_port.read.side_effect = [b'50000']
+
+        param = bridge.read_param()
+        assert param == "50000"
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_read_param_2digit_followed_by_opcode(self, mock_serial):
+        """2-digit param followed by next opcode in buffer → only digits extracted."""
+        # Buffer: '10tpINAabc' — param is '10', rest stays for next read_command()
+        bridge, mock_port = _make_bridge(mock_serial, in_waiting_sequence=[10, 0])
+        mock_port.read.side_effect = [b'10tpINAabc']
+
+        param = bridge.read_param()
+        assert param == "10"
+
+        # Remaining buffer should contain 'tpINAabc' → next read_command gets 'tpINA'
+        type(mock_port).in_waiting = PropertyMock(return_value=0)
+        cmd = bridge.read_command()
+        assert cmd == b'tpINA'
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_read_param_1digit(self, mock_serial):
+        """Single digit param followed by opcode → '0' extracted."""
+        bridge, mock_port = _make_bridge(mock_serial, in_waiting_sequence=[6, 0])
+        mock_port.read.side_effect = [b'0LCSI0']
+
+        param = bridge.read_param()
+        assert param == "0"
+
+        # Remaining buffer should have 'LCSI0'
+        type(mock_port).in_waiting = PropertyMock(return_value=0)
+        cmd = bridge.read_command()
+        assert cmd == b'LCSI0'
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_read_param_blocking(self, mock_serial):
+        """No data waiting → blocking read for param."""
+        bridge, mock_port = _make_bridge(mock_serial, in_waiting_sequence=[0, 5])
+        mock_port.read.side_effect = [b'3', b'000tpRTH']
+
+        param = bridge.read_param()
+        assert param == "3000"
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_read_param_timeout(self, mock_serial):
+        """No data at all → returns None."""
+        bridge, mock_port = _make_bridge(mock_serial, in_waiting_sequence=[0])
+        mock_port.read.return_value = b''
+
+        param = bridge.read_param()
+        assert param is None
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_read_param_no_digits(self, mock_serial):
+        """First byte is a letter (next opcode) → no param, returns None."""
+        bridge, mock_port = _make_bridge(mock_serial, in_waiting_sequence=[5])
+        mock_port.read.return_value = b'LCSI0'
+
+        param = bridge.read_param()
+        assert param is None
+
+        # Buffer should still have 'LCSI0' for read_command
+        type(mock_port).in_waiting = PropertyMock(return_value=0)
+        cmd = bridge.read_command()
+        assert cmd == b'LCSI0'
+
+    @patch('firmware_emulator.src.serial_bridge.serial.Serial')
+    def test_labview_burst_with_params(self, mock_serial):
+        """Full LabVIEW burst: DHBLS DHBLS tpENI tpRSP 50000 tpRTH 10 tpINA 0 LCSI0 LCSI1 LCSI2 TSENB."""
+        data = b'DHBLSDHBLStpENItpRSP50000tpRTH10tpINA0LCSI0LCSI1LCSI2TSENB'
+        bridge, mock_port = _make_bridge(
+            mock_serial, in_waiting_sequence=[len(data)] + [0] * 20
+        )
+        mock_port.read.side_effect = [data] + [b''] * 20
+
+        # DHBLS
+        cmd = bridge.read_command()
+        assert cmd == b'DHBLS'
+
+        # DHBLS
+        cmd = bridge.read_command()
+        assert cmd == b'DHBLS'
+
+        # tpENI
+        cmd = bridge.read_command()
+        assert cmd == b'tpENI'
+
+        # tpRSP (param opcode) — caller reads param next
+        cmd = bridge.read_command()
+        assert cmd == b'tpRSP'
+
+        # Param: 50000
+        param = bridge.read_param()
+        assert param == "50000"
+
+        # tpRTH (param opcode)
+        cmd = bridge.read_command()
+        assert cmd == b'tpRTH'
+
+        # Param: 10
+        param = bridge.read_param()
+        assert param == "10"
+
+        # tpINA (param opcode)
+        cmd = bridge.read_command()
+        assert cmd == b'tpINA'
+
+        # Param: 0
+        param = bridge.read_param()
+        assert param == "0"
+
+        # LCSI0
+        cmd = bridge.read_command()
+        assert cmd == b'LCSI0'
+
+        # LCSI1
+        cmd = bridge.read_command()
+        assert cmd == b'LCSI1'
+
+        # LCSI2
+        cmd = bridge.read_command()
+        assert cmd == b'LCSI2'
+
+        # TSENB
+        cmd = bridge.read_command()
+        assert cmd == b'TSENB'
