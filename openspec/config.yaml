@@ -16,9 +16,9 @@ rules:
     - Each task = 1 git commit with TDD process (test first, then implement)
     - Use parallel worktrees with subagent-driven-development for independent tasks
     - Mark task complete in tasks.md ONLY after:
-      * Tests pass (automated verification)
-      * Code committed to git
-      * All acceptance criteria met
+      - Tests pass (automated verification)
+      - Code committed to git
+      - All acceptance criteria met
   proposal:
     - Include Phase 1 scope (110 tasks, 60-75 hours estimated)
     - Mention two-terminal workflow (Emulator terminal + LabVIEW IDE terminal)

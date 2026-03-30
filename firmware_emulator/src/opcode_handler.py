@@ -1,7 +1,7 @@
 """Opcode handler registry and dispatch mechanism."""
 import logging
 from typing import Callable, Dict, Tuple, Optional, Any
-from firmware_emulator.src.device_state import DeviceState, GuidePosition
+from firmware_emulator.src.device_state import DeviceState, GuidePosition, RunState
 
 
 # Handler function signature: (state) -> (response, new_state)
@@ -662,6 +662,39 @@ class OpcodeHandler:
         
         self.register("MIRSP", handle_mirsp)
         
+        # ===== EMULATOR CONTROL (UI BUTTONS) =====
+        def handle_emrun(state: DeviceState) -> Tuple[str, DeviceState]:
+            """EMRUN: Set emulator run state to RUNNING."""
+            new_state = state.copy()
+            new_state.run_state = RunState.RUNNING
+            return "EMROK", new_state
+
+        self.register("EMRUN", handle_emrun)
+
+        def handle_empau(state: DeviceState) -> Tuple[str, DeviceState]:
+            """EMPAU: Set emulator run state to PAUSED."""
+            new_state = state.copy()
+            new_state.run_state = RunState.PAUSED
+            return "EMPOK", new_state
+
+        self.register("EMPAU", handle_empau)
+
+        def handle_emstp(state: DeviceState) -> Tuple[str, DeviceState]:
+            """EMSTP: Set emulator run state to STOPPED."""
+            new_state = state.copy()
+            new_state.run_state = RunState.STOPPED
+            return "EMSOK", new_state
+
+        self.register("EMSTP", handle_emstp)
+
+        def handle_bzzof(state: DeviceState) -> Tuple[str, DeviceState]:
+            """BZZOF: Set buzzer override to True (silence buzzer)."""
+            new_state = state.copy()
+            new_state.buzzer_override = True
+            return "BZZOK", new_state
+
+        self.register("BZZOF", handle_bzzof)
+
         # ===== ERROR HANDLING =====
         def handle_fls(state: DeviceState) -> Tuple[str, DeviceState]:
             """FLS: Failed/Error response (standard failure response)."""

@@ -150,6 +150,44 @@ header h1 .logo-icon {
     border-radius: var(--radius-sm);
 }
 
+/* Query status indicator */
+.query-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.3px;
+}
+
+.query-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--off);
+    display: inline-block;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
+.query-dot.ok {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+}
+
+.query-dot.fail {
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
+}
+
+.query-dot.unknown {
+    background: var(--off);
+}
+
 .status-dot {
     width: 8px;
     height: 8px;
@@ -650,6 +688,90 @@ header h1 .logo-icon {
     animation: pulse-dot 0.4s ease-in-out infinite;
 }
 
+/* --- Emulator Control Buttons --- */
+.control-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.control-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    letter-spacing: 0.5px;
+}
+
+.control-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-accent);
+}
+
+.control-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.control-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.control-btn-run { border-left: 3px solid var(--green); }
+.control-btn-pause { border-left: 3px solid var(--yellow); }
+.control-btn-stop { border-left: 3px solid var(--red); }
+.control-btn-buzzer { border-left: 3px solid var(--blue); }
+
+.control-light {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--off);
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+    border: 1px solid var(--border-subtle);
+}
+
+.control-light.active-run {
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+    border-color: var(--green);
+}
+
+.control-light.active-pause {
+    background: var(--yellow);
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+    border-color: var(--yellow);
+}
+
+.control-light.active-stop {
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+    border-color: var(--red);
+}
+
+.control-light.active-buzzer {
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+    border-color: var(--green);
+}
+
+.control-btn-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
 /* --- Cameras --- */
 .camera-grid {
     display: grid;
@@ -703,6 +825,45 @@ header h1 .logo-icon {
     font-family: var(--font-mono);
     color: var(--text-primary);
     font-weight: 600;
+}
+
+/* --- Camera Light Channels --- */
+.light-channel-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.light-channel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 4px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    transition: border-color 0.2s;
+}
+
+.light-ch-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--off);
+    display: inline-block;
+    transition: background 0.3s, box-shadow 0.3s;
+    border: 1px solid var(--border-subtle);
+}
+
+.light-ch-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    border-color: var(--green);
 }
 
 /* --- Command Log --- */

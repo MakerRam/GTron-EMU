@@ -18,6 +18,10 @@
         </h1>
         <div class="header-controls">
             <span id="cycle-label" class="cycle-label">--</span>
+            <div id="query-status" class="query-status">
+                <span class="query-dot" id="query-dot"></span>
+                <span id="query-text">QRY --</span>
+            </div>
             <div id="connection-status" class="connection-status">
                 <span class="status-dot" id="status-dot"></span>
                 <span id="status-text">Initializing...</span>
@@ -241,6 +245,45 @@
                 <div class="camera-info">
                     <span>Active Seq: <strong id="cam-active-seq">--</strong></span>
                     <span>Timestamp: <strong id="cam-timestamp">--</strong></span>
+                </div>
+                <h3>Lights</h3>
+                <div class="light-channel-grid">
+                    <span class="light-channel" id="light-ch-1"><span class="light-ch-dot"></span> L1</span>
+                    <span class="light-channel" id="light-ch-2"><span class="light-ch-dot"></span> L2</span>
+                    <span class="light-channel" id="light-ch-3"><span class="light-ch-dot"></span> L3</span>
+                    <span class="light-channel" id="light-ch-4"><span class="light-ch-dot"></span> L4</span>
+                    <span class="light-channel" id="light-ch-5"><span class="light-ch-dot"></span> L5</span>
+                    <span class="light-channel" id="light-ch-6"><span class="light-ch-dot"></span> L6</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel: Emulator Control -->
+        <section class="panel" id="panel-control">
+            <h2>
+                <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Emulator Control
+            </h2>
+            <div class="panel-content" id="emulator-control">
+                <div class="control-buttons-grid">
+                    <button class="control-btn control-btn-run" id="btn-run" onclick="onControlClick('EMRUN')">
+                        <span class="control-light" id="light-run"></span>
+                        <span class="control-btn-label">RUN</span>
+                    </button>
+                    <button class="control-btn control-btn-pause" id="btn-pause" onclick="onControlClick('EMPAU')">
+                        <span class="control-light" id="light-pause"></span>
+                        <span class="control-btn-label">PAUSE</span>
+                    </button>
+                    <button class="control-btn control-btn-stop" id="btn-stop" onclick="onControlClick('EMSTP')">
+                        <span class="control-light" id="light-stop"></span>
+                        <span class="control-btn-label">STOP</span>
+                    </button>
+                    <button class="control-btn control-btn-buzzer" id="btn-buzzer-off" onclick="onControlClick('BZZOF')">
+                        <span class="control-light" id="light-buzzer-off"></span>
+                        <span class="control-btn-label">BZR OFF</span>
+                    </button>
                 </div>
             </div>
         </section>

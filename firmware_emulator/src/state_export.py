@@ -67,7 +67,7 @@ class StateExporter:
 
         Returns only the fields needed for real-time UI updates:
         guide positions, reeler speeds, sag sensors, lamps, camera
-        flags, system status, and last command.
+        flags, system status, emulator control state, and last command.
 
         Returns:
             Compact dict — significantly smaller than full state.
@@ -88,4 +88,8 @@ class StateExporter:
             "estop_pressed": s.estop_pressed,
             "power_on": s.power_on,
             "last_command": s.last_command,
+            "run_state": s.run_state.value,
+            "buzzer_override": s.buzzer_override,
+            "query_responsive": s.query_responsive,
+            "light_channels": dict(s.light_channels),
         }

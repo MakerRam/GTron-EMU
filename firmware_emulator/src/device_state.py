@@ -29,6 +29,13 @@ class MotorState(Enum):
     STOPPED = "stopped"
 
 
+class RunState(Enum):
+    """Emulator run states for UI control buttons"""
+    RUNNING = "running"
+    PAUSED = "paused"
+    STOPPED = "stopped"
+
+
 @dataclass
 class GuideState:
     """Guide motor state (Top and Bottom racks)"""
@@ -142,6 +149,12 @@ class DeviceState:
         self.last_command = None
         self.last_command_time = None
 
+        # Emulator control state (UI control buttons)
+        self.run_state = RunState.STOPPED
+        self.buzzer_override = False
+        self.query_responsive = True
+        self.light_channels = {str(i): False for i in range(1, 7)}  # "1"-"6"
+
     def reset(self):
         """Reset device to initial state"""
         self.__init__()
@@ -198,6 +211,10 @@ class DeviceState:
             'reeler_initialized': self.reeler_initialized,
             'last_command': self.last_command,
             'last_command_time': self.last_command_time,
+            'run_state': self.run_state.value,
+            'buzzer_override': self.buzzer_override,
+            'query_responsive': self.query_responsive,
+            'light_channels': dict(self.light_channels),
         }
 
     def to_json(self) -> str:

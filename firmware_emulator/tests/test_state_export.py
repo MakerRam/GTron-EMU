@@ -11,7 +11,7 @@ import pytest
 import sys
 import os
 
-from firmware_emulator.src.device_state import DeviceState, GuidePosition
+from firmware_emulator.src.device_state import DeviceState, GuidePosition, RunState
 from firmware_emulator.src.state_export import StateExporter
 
 
@@ -185,3 +185,71 @@ class TestExportSummary:
         state.guide_top.position = GuidePosition.OPEN
         result = exporter.export_summary()
         assert result["guide_top"] == "open"
+
+
+# --- Emulator Control Fields in Exports ---
+
+class TestExportEmulatorControlFields:
+    """Test that new emulator control fields appear in exports."""
+
+    def test_get_state_dict_includes_run_state(self, exporter):
+        result = exporter.get_state_dict()
+        assert "run_state" in result
+        assert result["run_state"] == "stopped"
+
+    def test_get_state_dict_includes_buzzer_override(self, exporter):
+        result = exporter.get_state_dict()
+        assert "buzzer_override" in result
+        assert result["buzzer_override"] is False
+
+    def test_get_state_dict_includes_query_responsive(self, exporter):
+        result = exporter.get_state_dict()
+        assert "query_responsive" in result
+        assert result["query_responsive"] is True
+
+    def test_get_state_dict_includes_light_channels(self, exporter):
+        result = exporter.get_state_dict()
+        assert "light_channels" in result
+        assert len(result["light_channels"]) == 6
+
+    def test_get_state_dict_reflects_run_state_change(self, exporter, state):
+        state.run_state = RunState.RUNNING
+        result = exporter.get_state_dict()
+        assert result["run_state"] == "running"
+
+    def test_get_state_dict_reflects_light_channel_change(self, exporter, state):
+        state.light_channels["3"] = True
+        result = exporter.get_state_dict()
+        assert result["light_channels"]["3"] is True
+
+    def test_summary_includes_run_state(self, exporter):
+        result = exporter.export_summary()
+        assert "run_state" in result
+        assert result["run_state"] == "stopped"
+
+    def test_summary_includes_buzzer_override(self, exporter):
+        result = exporter.export_summary()
+        assert "buzzer_override" in result
+
+    def test_summary_includes_query_responsive(self, exporter):
+        result = exporter.export_summary()
+        assert "query_responsive" in result
+
+    def test_summary_includes_light_channels(self, exporter):
+        result = exporter.export_summary()
+        assert "light_channels" in result
+        assert len(result["light_channels"]) == 6
+
+    def test_summary_reflects_run_state_change(self, exporter, state):
+        state.run_state = RunState.PAUSED
+        result = exporter.export_summary()
+        assert result["run_state"] == "paused"
+
+    def test_json_includes_new_fields(self, exporter, state):
+        state.run_state = RunState.RUNNING
+        state.buzzer_override = True
+        data = json.loads(exporter.get_state_json())
+        assert data["run_state"] == "running"
+        assert data["buzzer_override"] is True
+        assert data["query_responsive"] is True
+        assert "light_channels" in data

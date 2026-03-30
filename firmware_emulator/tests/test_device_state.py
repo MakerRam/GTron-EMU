@@ -5,7 +5,7 @@ import pytest
 import json
 from firmware_emulator.src.device_state import (
     DeviceState, GuideState, ReelerState, SensorState, EncoderState,
-    CameraState, LampState, GuidePosition, MotorState
+    CameraState, LampState, GuidePosition, MotorState, RunState
 )
 
 
@@ -269,6 +269,156 @@ class TestDeviceState:
         assert state.guide_bottom.position == GuidePosition.UNKNOWN
         assert state.reeler_bottom.speed == 0
         assert state.sensor_bottom.attached is False
+
+
+class TestRunState:
+    """Test RunState enum"""
+
+    def test_run_state_values(self):
+        """Test RunState enum has expected values"""
+        assert RunState.RUNNING.value == "running"
+        assert RunState.PAUSED.value == "paused"
+        assert RunState.STOPPED.value == "stopped"
+
+    def test_run_state_from_string(self):
+        """Test creating RunState from string value"""
+        assert RunState("running") == RunState.RUNNING
+        assert RunState("paused") == RunState.PAUSED
+        assert RunState("stopped") == RunState.STOPPED
+
+
+class TestDeviceStateEmulatorControl:
+    """Test new emulator control fields on DeviceState"""
+
+    def test_default_run_state(self):
+        """Test run_state defaults to STOPPED"""
+        state = DeviceState()
+        assert state.run_state == RunState.STOPPED
+
+    def test_default_buzzer_override(self):
+        """Test buzzer_override defaults to False"""
+        state = DeviceState()
+        assert state.buzzer_override is False
+
+    def test_default_query_responsive(self):
+        """Test query_responsive defaults to True"""
+        state = DeviceState()
+        assert state.query_responsive is True
+
+    def test_default_light_channels(self):
+        """Test light_channels defaults to 6 channels all False"""
+        state = DeviceState()
+        assert isinstance(state.light_channels, dict)
+        assert len(state.light_channels) == 6
+        for i in range(1, 7):
+            assert state.light_channels[str(i)] is False
+
+    def test_run_state_transitions(self):
+        """Test run_state can be set to all valid values"""
+        state = DeviceState()
+        state.run_state = RunState.RUNNING
+        assert state.run_state == RunState.RUNNING
+        state.run_state = RunState.PAUSED
+        assert state.run_state == RunState.PAUSED
+        state.run_state = RunState.STOPPED
+        assert state.run_state == RunState.STOPPED
+
+    def test_buzzer_override_toggle(self):
+        """Test buzzer_override can be toggled"""
+        state = DeviceState()
+        state.buzzer_override = True
+        assert state.buzzer_override is True
+        state.buzzer_override = False
+        assert state.buzzer_override is False
+
+    def test_query_responsive_toggle(self):
+        """Test query_responsive can be toggled"""
+        state = DeviceState()
+        state.query_responsive = False
+        assert state.query_responsive is False
+        state.query_responsive = True
+        assert state.query_responsive is True
+
+    def test_light_channels_individual_toggle(self):
+        """Test individual light channels can be toggled"""
+        state = DeviceState()
+        state.light_channels["3"] = True
+        assert state.light_channels["3"] is True
+        assert state.light_channels["1"] is False  # others unaffected
+
+    def test_to_dict_includes_run_state(self):
+        """Test to_dict includes run_state as string"""
+        state = DeviceState()
+        state.run_state = RunState.RUNNING
+        d = state.to_dict()
+        assert d["run_state"] == "running"
+
+    def test_to_dict_includes_buzzer_override(self):
+        """Test to_dict includes buzzer_override"""
+        state = DeviceState()
+        state.buzzer_override = True
+        d = state.to_dict()
+        assert d["buzzer_override"] is True
+
+    def test_to_dict_includes_query_responsive(self):
+        """Test to_dict includes query_responsive"""
+        state = DeviceState()
+        d = state.to_dict()
+        assert d["query_responsive"] is True
+
+    def test_to_dict_includes_light_channels(self):
+        """Test to_dict includes light_channels as dict"""
+        state = DeviceState()
+        state.light_channels["1"] = True
+        state.light_channels["5"] = True
+        d = state.to_dict()
+        assert d["light_channels"]["1"] is True
+        assert d["light_channels"]["5"] is True
+        assert d["light_channels"]["2"] is False
+
+    def test_to_json_includes_new_fields(self):
+        """Test to_json serializes new fields correctly"""
+        state = DeviceState()
+        state.run_state = RunState.PAUSED
+        state.buzzer_override = True
+        data = json.loads(state.to_json())
+        assert data["run_state"] == "paused"
+        assert data["buzzer_override"] is True
+        assert data["query_responsive"] is True
+        assert "light_channels" in data
+
+    def test_reset_restores_new_field_defaults(self):
+        """Test reset() restores all new fields to defaults"""
+        state = DeviceState()
+        state.run_state = RunState.RUNNING
+        state.buzzer_override = True
+        state.query_responsive = False
+        state.light_channels["1"] = True
+        state.light_channels["4"] = True
+
+        state.reset()
+
+        assert state.run_state == RunState.STOPPED
+        assert state.buzzer_override is False
+        assert state.query_responsive is True
+        for i in range(1, 7):
+            assert state.light_channels[str(i)] is False
+
+    def test_copy_preserves_new_fields(self):
+        """Test copy() deep-copies new fields"""
+        state = DeviceState()
+        state.run_state = RunState.RUNNING
+        state.buzzer_override = True
+        state.light_channels["2"] = True
+
+        copied = state.copy()
+
+        assert copied.run_state == RunState.RUNNING
+        assert copied.buzzer_override is True
+        assert copied.light_channels["2"] is True
+        # Verify deep copy - modifying copy doesn't affect original
+        copied.light_channels["2"] = False
+        assert state.light_channels["2"] is True
 
 
 class TestDeviceStateTransitions:

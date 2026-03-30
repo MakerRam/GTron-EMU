@@ -247,6 +247,51 @@ function renderCameras(state) {
         state.cameras.timestamp_enabled ? 'ENABLED' : 'DISABLED';
 }
 
+function renderControlButtons(state) {
+    if (!state) return;
+
+    const lightRun = document.getElementById('light-run');
+    const lightPause = document.getElementById('light-pause');
+    const lightStop = document.getElementById('light-stop');
+    const lightBuzzer = document.getElementById('light-buzzer-off');
+
+    // Reset all lights
+    lightRun.className = 'control-light';
+    lightPause.className = 'control-light';
+    lightStop.className = 'control-light';
+    lightBuzzer.className = 'control-light';
+
+    // Set active light based on run_state
+    const runState = state.run_state || 'running';
+    if (runState === 'running') {
+        lightRun.classList.add('active-run');
+    } else if (runState === 'paused') {
+        lightPause.classList.add('active-pause');
+    } else if (runState === 'stopped') {
+        lightStop.classList.add('active-stop');
+    }
+
+    // Buzzer override light
+    if (state.buzzer_override) {
+        lightBuzzer.classList.add('active-buzzer');
+    }
+}
+
+function renderLightChannels(state) {
+    if (!state) return;
+
+    const channels = state.light_channels || {};
+    for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById(`light-ch-${i}`);
+        if (!el) continue;
+        const dot = el.querySelector('.light-ch-dot');
+        dot.className = 'light-ch-dot';
+        if (channels[String(i)]) {
+            dot.classList.add('active');
+        }
+    }
+}
+
 function renderSystemStatus(state) {
     if (!state) return;
 
@@ -320,6 +365,29 @@ function renderConnectionStatus(status) {
     }
 }
 
+function renderQueryStatus(state, connectionStatus) {
+    const dot = document.getElementById('query-dot');
+    const text = document.getElementById('query-text');
+
+    dot.className = 'query-dot';
+
+    if (connectionStatus === 'disconnected') {
+        dot.classList.add('unknown');
+        text.textContent = 'QRY --';
+    } else {
+        const responsive = state && state.query_responsive !== undefined
+            ? state.query_responsive
+            : true; // default to true if field not present
+        if (responsive) {
+            dot.classList.add('ok');
+            text.textContent = 'QRY OK';
+        } else {
+            dot.classList.add('fail');
+            text.textContent = 'QRY FAIL';
+        }
+    }
+}
+
 function renderCycleLabel(state) {
     const label = document.getElementById('cycle-label');
     if (state && state._label) {
@@ -336,6 +404,9 @@ function renderAll(state) {
     renderLamps(state);
     renderCameras(state);
     renderSystemStatus(state);
+    renderControlButtons(state);
+    renderLightChannels(state);
+    renderQueryStatus(state, CONFIG.mode === 'mock' ? 'mock' : 'connected');
     renderCommandLog();
     renderCycleLabel(state);
 }
@@ -366,9 +437,94 @@ function setMode(mode) {
         renderConnectionStatus('connected');
     }
 
+    // Update control button state for mock mode
+    updateControlButtonsDisabled();
+
     // Restart polling
     stopPolling();
     startPolling();
+}
+
+// ============================================
+// Control Command Sending
+// ============================================
+
+/** Set of button IDs currently debounced (waiting for next poll to re-enable). */
+const debouncedButtons = new Set();
+
+/**
+ * Send a control command to the emulator via POST /api/command.
+ * Handles debounce: disables the button for 500ms, then re-enables
+ * on next successful state poll.
+ *
+ * @param {string} opcode - One of EMRUN, EMPAU, EMSTP, BZZOF
+ * @param {string} buttonId - DOM id of the button that was clicked
+ */
+async function sendControlCommand(opcode, buttonId) {
+    if (CONFIG.mode === 'mock') return; // no-op in mock mode
+
+    const btn = document.getElementById(buttonId);
+    if (!btn || btn.disabled) return;
+
+    // Debounce: disable button immediately
+    btn.disabled = true;
+    debouncedButtons.add(buttonId);
+
+    try {
+        const url = document.getElementById('api-url').value || CONFIG.apiUrl;
+        const response = await fetch(url + '/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: opcode }),
+            signal: AbortSignal.timeout(2000)
+        });
+        if (!response.ok) {
+            console.error(`Control command ${opcode} failed: HTTP ${response.status}`);
+        }
+    } catch (e) {
+        console.error(`Control command ${opcode} error:`, e);
+    }
+
+    // Re-enable after 500ms minimum (polling will also clear debounce)
+    setTimeout(() => {
+        debouncedButtons.delete(buttonId);
+        if (btn && CONFIG.mode !== 'mock') {
+            btn.disabled = false;
+        }
+    }, 500);
+}
+
+/**
+ * Enable or disable all control buttons based on current mode.
+ * In mock mode, buttons are disabled and greyed out.
+ */
+function updateControlButtonsDisabled() {
+    const isMock = CONFIG.mode === 'mock';
+    const buttons = ['btn-run', 'btn-pause', 'btn-stop', 'btn-buzzer-off'];
+    buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.disabled = isMock;
+            btn.classList.toggle('mock-disabled', isMock);
+        }
+    });
+}
+
+/**
+ * onclick handler wired from HTML buttons.
+ * Maps opcode to button ID and delegates to sendControlCommand.
+ */
+function onControlClick(opcode) {
+    const opcodeToButton = {
+        'EMRUN': 'btn-run',
+        'EMPAU': 'btn-pause',
+        'EMSTP': 'btn-stop',
+        'BZZOF': 'btn-buzzer-off'
+    };
+    const buttonId = opcodeToButton[opcode];
+    if (buttonId) {
+        sendControlCommand(opcode, buttonId);
+    }
 }
 
 // ============================================
@@ -404,6 +560,7 @@ function startPolling() {
                 renderConnectionStatus('connected');
             } catch (e) {
                 renderConnectionStatus('disconnected');
+                renderQueryStatus(null, 'disconnected');
             } finally {
                 fetching = false;
             }
@@ -430,6 +587,7 @@ async function init() {
     // Start in Live mode by default so real API data is shown immediately
     document.getElementById('api-url').classList.add('visible');
     renderConnectionStatus('connected');
+    updateControlButtonsDisabled();
 
     // Start polling
     startPolling();
