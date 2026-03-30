@@ -40,9 +40,20 @@ The system SHALL provide an HTML/JS dashboard that polls the API and displays de
 - **AND** updates within 100ms
 
 #### Scenario: Camera activity displays
-- **WHEN** API state shows cameras.flags={0:true, 1:false, ...}
-- **THEN** dashboard displays camera icons with active flags highlighted
+- **WHEN** API state shows cameras.flags={"1":true, "2":false, "3":true, "4":false, "5":false, "6":false}
+- **THEN** dashboard displays 6 camera indicators (1-6) with active flags highlighted
 - **AND** active_sequence shows which camera is currently active
+- **AND** camera 0 does not exist in the UI
+
+#### Scenario: Power On button sends command
+- **WHEN** user clicks "PWR ON" button in live mode
+- **THEN** system sends POST /api/command with {"command": "PWRON"}
+- **AND** button is debounced for 500ms
+
+#### Scenario: Emergency Exit button sends command
+- **WHEN** user clicks "E-EXIT" button in live mode
+- **THEN** system sends POST /api/command with {"command": "EMEXI"}
+- **AND** button is debounced for 500ms
 
 #### Scenario: System status panel displays
 - **WHEN** API state shows door_locked=true, estop_pressed=false, power_on=true
@@ -177,3 +188,4 @@ The system SHALL provide 10-state cycle that represents a typical machine operat
 - **THEN** JSON parses without errors
 - **AND** each state object includes all required fields
 - **AND** field values are realistic and within valid ranges
+- **AND** camera flags use keys "1" through "6" (not "0" through "6")

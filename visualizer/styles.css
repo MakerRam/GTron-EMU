@@ -306,6 +306,8 @@ header h1 .logo-icon {
     overflow: hidden;
     box-shadow: var(--shadow-panel);
     transition: border-color 0.2s;
+    display: flex;
+    flex-direction: column;
 }
 
 .panel:hover {
@@ -318,7 +320,7 @@ header h1 .logo-icon {
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted);
-    padding: 10px 14px;
+    padding: 8px 14px;
     background: var(--bg-panel-header);
     border-bottom: 1px solid var(--border-panel);
     display: flex;
@@ -339,15 +341,22 @@ header h1 .logo-icon {
     text-transform: uppercase;
     letter-spacing: 1.2px;
     color: var(--text-muted);
-    padding: 8px 14px 4px;
+    padding: 4px 14px 2px;
     margin-top: 2px;
 }
 
 .panel-content {
-    padding: 12px 14px;
+    padding: 10px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- Guide Motors --- */
+#guide-motors {
+    justify-content: center;
+}
+
 .motor-row {
     display: flex;
     align-items: center;
@@ -517,11 +526,15 @@ header h1 .logo-icon {
 }
 
 /* --- System Status --- */
+#system-status {
+    justify-content: center;
+}
+
 .status-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 4px 0;
+    padding: 3px 0;
     border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -635,19 +648,19 @@ header h1 .logo-icon {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 14px;
+    gap: 4px;
+    padding: 8px;
 }
 
 .lamp-housing {
     background: var(--bg-inset);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: 12px 20px;
+    padding: 8px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
     max-width: 160px;
 }
@@ -712,15 +725,16 @@ header h1 .logo-icon {
 /* --- Front Panel Control Buttons --- */
 .control-buttons-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+    height: 100%;
 }
 
 .control-btn {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     background: var(--bg-inset);
@@ -813,15 +827,15 @@ header h1 .logo-icon {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 .camera-flag {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 4px;
+    gap: 3px;
+    padding: 6px 4px;
     background: var(--bg-inset);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
@@ -850,10 +864,10 @@ header h1 .logo-icon {
 .camera-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     font-size: 11px;
     color: var(--text-secondary);
-    padding-top: 8px;
+    padding-top: 6px;
     border-top: 1px solid var(--border-subtle);
 }
 
@@ -868,7 +882,7 @@ header h1 .logo-icon {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 6px;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .light-channel {
