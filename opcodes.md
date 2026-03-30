@@ -148,8 +148,8 @@
 | [x] | `tpGCL` | Close top guide | command | Sets guide_top CLOSED, responds `tpGCR` (with delay) |
 | [x] | `bmGOP` | Open bottom guide | command | Sets guide_bottom OPEN, responds `bmGOR` (with delay) |
 | [x] | `bmGCL` | Close bottom guide | command | Sets guide_bottom CLOSED, responds `bmGCR` (with delay) |
-| [?] | `tpGDI` | Top guide insert (move to steps) | command | Accepts command, reads step count from serial — **needs param support (Phase 2)** |
-| [?] | `bmGDI` | Bottom guide insert (move to steps) | command | Accepts command, reads step count from serial — **needs param support (Phase 2)** |
+| [x] | `tpGDI` | Top guide insert (move to steps) | command | Param opcode: reads step count (5000) from 2nd frame → sets guide_top CLOSED, no response |
+| [x] | `bmGDI` | Bottom guide insert (move to steps) | command | Param opcode: reads step count (5000) from 2nd frame → sets guide_bottom CLOSED, no response |
 | [x] | `tpGTS` | Top guide test (open then close) | command | Runs open+close sequence, no serial response |
 | [x] | `bmGTS` | Bottom guide test (open then close) | command | Runs open+close sequence, no serial response |
 | [ ] | `tpGOR` | Top guide open response | response | _(return value)_ |
@@ -190,11 +190,11 @@
 | [x] | `tpSTP` | Stop top reeler | command | Sets `reeler_top.running = False` |
 | [x] | `bmSTR` | Start bottom reeler | command | Sets `reeler_bottom.running = True` |
 | [x] | `bmSTP` | Stop bottom reeler | command | Sets `reeler_bottom.running = False` |
-| [?] | `tpRSP` | Set top reeler speed | command | Accepts command — **reads RPM from serial, needs param support (Phase 2)** |
-| [?] | `bmRSP` | Set bottom reeler speed | command | Accepts command — **reads RPM from serial, needs param support (Phase 2)** |
+| [x] | `tpRSP` | Set top reeler speed | command | Param opcode: reads RPM (200) from 2nd frame → stores in reeler_top.speed, no response |
+| [x] | `bmRSP` | Set bottom reeler speed | command | Param opcode: reads RPM (200) from 2nd frame → stores in reeler_bottom.speed, no response |
 | [x] | `tpRTR` | Rotate top reeler (diagnostic) | command | Sets reeler running, responds `RHD` when done |
 | [x] | `bmRTR` | Rotate bottom reeler (diagnostic) | command | Sets reeler running, responds `RHD` when done |
-| [?] | `RMSMF` | Set reeler speed multiplication factor | command | Accepts command — **reads value from serial, needs param support (Phase 2)** |
+| [x] | `RMSMF` | Set reeler speed multiplication factor | command | Param opcode: reads value from 2nd frame → ignored (no-op), no response |
 | [ ] | `RHD` | Reeler operation complete | response | _(return value)_ |
 
 ---
@@ -205,15 +205,15 @@
 |--------|--------|------|-----------|-------------------|
 | [x] | `tpENI` | Initialize top encoder | command | Sets `encoder_top.initialized = True` |
 | [x] | `bmENI` | Initialize bottom encoder | command | Sets `encoder_bottom.initialized = True` |
-| [?] | `tpINA` | Set top encoder initial angle | command | Accepts command — **reads angle from serial, needs param support (Phase 2)** |
-| [?] | `bmINA` | Set bottom encoder initial angle | command | Accepts command — **reads angle from serial, needs param support (Phase 2)** |
+| [x] | `tpINA` | Set top encoder initial angle | command | Param opcode: reads angle from 2nd frame → ignored (no-op), no response |
+| [x] | `bmINA` | Set bottom encoder initial angle | command | Param opcode: reads angle from 2nd frame → ignored (no-op), no response |
 | [x] | `tpEEN` | Enable top encoder trigger | command | Sets `encoder_top.enabled = True` |
 | [x] | `tpEDB` | Disable top encoder trigger | command | Sets `encoder_top.enabled = False` |
 | [x] | `bmEEN` | Enable bottom encoder trigger | command | Sets `encoder_bottom.enabled = True` |
 | [x] | `bmEDB` | Disable bottom encoder trigger | command | Sets `encoder_bottom.enabled = False` |
-| [?] | `tpRTH` | Set top reeler teeth count | command | Accepts command — **reads teeth count from serial, needs param support (Phase 2)** |
-| [?] | `bmRTH` | Set bottom reeler teeth count | command | Accepts command — **reads teeth count from serial, needs param support (Phase 2)** |
-| [?] | `SKTRG` | Set skip trigger count | command | Accepts command — **reads count from serial, needs param support (Phase 2)** |
+| [x] | `tpRTH` | Set top reeler teeth count | command | Param opcode: reads teeth count from 2nd frame → ignored (no-op), no response |
+| [x] | `bmRTH` | Set bottom reeler teeth count | command | Param opcode: reads teeth count from 2nd frame → ignored (no-op), no response |
+| [x] | `SKTRG` | Set skip trigger count | command | Param opcode: reads count from 2nd frame → ignored (no-op), no response |
 
 ---
 
@@ -291,14 +291,14 @@
 
 | Status | Opcode | Name | Direction | Emulator Behavior |
 |--------|--------|------|-----------|-------------------|
-| [?] | `LONDT` | Set light ON delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `CONDT` | Set camera ON delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `COFDT` | Set camera OFF delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `LOFDT` | Set light OFF delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `TLOND` | Set top-light ON delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `TCOND` | Set top-camera ON delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `TCOFD` | Set top-camera OFF delay | command | **Commented out in firmware** — accept silently? |
-| [?] | `TLOFD` | Set top-light OFF delay | command | **Commented out in firmware** — accept silently? |
+| [x] | `LONDT` | Set light ON delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `CONDT` | Set camera ON delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `COFDT` | Set camera OFF delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `LOFDT` | Set light OFF delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `TLOND` | Set top-light ON delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `TCOND` | Set top-camera ON delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `TCOFD` | Set top-camera OFF delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
+| [x] | `TLOFD` | Set top-light OFF delay | command | Param opcode: commented out in firmware → ignored (no-op), no response |
 
 ---
 
@@ -325,8 +325,8 @@
 |--------|--------|------|-----------|-------------------|
 | [x] | `RFS01` | Top camera reference search | command | Responds `TRD01` (with delay) |
 | [x] | `RFS02` | Bottom camera reference search | command | Responds `TRD02` (with delay) |
-| [?] | `SPM01` | Set top SPM delay | command | Accepts command — **reads microseconds from serial, needs param support (Phase 2)** |
-| [?] | `SPM02` | Set bottom SPM delay | command | Accepts command — **reads microseconds from serial, needs param support (Phase 2)** |
+| [x] | `SPM01` | Set top SPM delay | command | Param opcode: reads microseconds (3000) from 2nd frame → stores in spm_delay_top, no response |
+| [x] | `SPM02` | Set bottom SPM delay | command | Param opcode: reads microseconds (3000) from 2nd frame → stores in spm_delay_bottom, no response |
 | [ ] | `TRD01` | Top reference search done | response | _(return value)_ |
 | [ ] | `TRD02` | Bottom reference search done | response | _(return value)_ |
 
@@ -388,11 +388,11 @@ These opcodes are NOT part of the real hardware protocol. They exist only for th
 All `[?]` items are opcodes that **read additional data from serial** after the 5-byte opcode. The current protocol is fixed 5-byte frames with no parameter passing. These opcodes are accepted silently (no error) but do not parse parameters yet.
 
 Opcodes needing Phase 2 parameter support:
-- `tpGDI` / `bmGDI` — guide motor step count
-- `tpRSP` / `bmRSP` — reeler RPM
-- `RMSMF` — reeler multiplication factor
-- `tpINA` / `bmINA` — encoder initial angle
-- `tpRTH` / `bmRTH` — encoder teeth count
-- `SKTRG` — skip trigger count
-- `SPM01` / `SPM02` — SPM delay microseconds
-- `LONDT` / `CONDT` / `COFDT` / `LOFDT` / `TLOND` / `TCOND` / `TCOFD` / `TLOFD` — timing configs (commented out in firmware)
+- `tpGDI` / `bmGDI` — guide motor step count  - step count constant: 5000 //step count comes anlong with opcode. No response required, upadte in UI close guide condition.
+- `tpRSP` / `bmRSP` — reeler RPM -  constant: 200 //count comes anlong with opcode. No response required.
+- `RMSMF` — reeler multiplication factor //ignore, no response required.
+- `tpINA` / `bmINA` — encoder initial angle //ignore, no response required.
+- `tpRTH` / `bmRTH` — encoder teeth count //ignore, no response required.
+- `SKTRG` — skip trigger count ignore, no response required.
+- `SPM01` / `SPM02` — SPM delay microseconds //3000ms
+- `LONDT` / `CONDT` / `COFDT` / `LOFDT` / `TLOND` / `TCOND` / `TCOFD` / `TLOFD` — timing configs (commented out in firmware)  //ignore, no response required.

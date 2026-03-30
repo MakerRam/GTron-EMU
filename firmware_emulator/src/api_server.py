@@ -26,13 +26,14 @@ from firmware_emulator.src.device_state import DeviceState
 logger = logging.getLogger(__name__)
 
 
-def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str, DeviceState], Tuple[str, DeviceState]]] = None, device_state_ref: Optional[list] = None) -> Flask:
+def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str, DeviceState], Tuple[str, DeviceState]]] = None, device_state_ref: Optional[list] = None, param_command_handler: Optional[Callable] = None) -> Flask:
     """Create and configure Flask application.
 
     Args:
         exporter: StateExporter instance for reading device state.
         command_handler: Optional callable to process commands
         device_state_ref: Optional list [DeviceState] for command injection
+        param_command_handler: Optional callable(opcode, state, param) for param opcodes
 
     Returns:
         Configured Flask app with routes and CORS enabled.
@@ -71,10 +72,14 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
         """Send a command to the emulator.
         
         Expects JSON: {"command": "TPGOP"} (5-byte opcode string)
+        Optional:     {"command": "TPGDI", "param": "5000"}
         Returns: {"response": "TPGOR", "responses": ["TPGOR"], "last_command": "TPGOP"}
         
         For multi-response opcodes (e.g. TPSAG), "responses" contains all frames
         and "response" contains the first one.
+        
+        For parameter opcodes (TPGDI, TPRSP, etc.), include the "param" field
+        with the value that would arrive in the second 5-byte serial frame.
         """
         if not command_handler or not device_state_ref:
             print(f"[DBG-API] /api/command: 501 - command_handler={command_handler!r}, device_state_ref={device_state_ref!r}", flush=True)
@@ -89,13 +94,18 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
             if len(opcode) > 5:
                 opcode = opcode[:5]
             
-            print(f"[DBG-API] /api/command: opcode={opcode!r}", flush=True)
+            param = data.get("param", "").strip()
+            
+            print(f"[DBG-API] /api/command: opcode={opcode!r} param={param!r}", flush=True)
             
             # Get current state from exporter's internal reference
             current_state = exporter._state
             
-            # Call handler (dispatch returns FLS for unknown opcodes, never raises KeyError)
-            response, new_state = command_handler(opcode, current_state)
+            # Use param handler if param provided and handler available
+            if param and param_command_handler:
+                response, new_state = param_command_handler(opcode, current_state, param)
+            else:
+                response, new_state = command_handler(opcode, current_state)
             
             # Record command in state for UI tracking (same as serial path in main.py)
             new_state.log_command(opcode)
@@ -148,8 +158,9 @@ class APIServer:
         host: str = "0.0.0.0",
         command_handler: Optional[Callable[[str, DeviceState], Tuple[str, DeviceState]]] = None,
         device_state_ref: Optional[list] = None,
+        param_command_handler: Optional[Callable] = None,
     ):
-        self._app = create_app(exporter, command_handler, device_state_ref)
+        self._app = create_app(exporter, command_handler, device_state_ref, param_command_handler)
         self._port = port
         self._host = host
         self._thread: Optional[threading.Thread] = None

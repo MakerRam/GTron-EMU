@@ -10,6 +10,13 @@ Handler return types:
   - (str, DeviceState)        — single response
   - (list[str], DeviceState)  — multiple responses sent back-to-back
   - ("", DeviceState)         — fire-and-forget, no serial response
+
+Parameter opcodes:
+  Some opcodes expect a second 5-byte frame on serial containing a
+  parameter value (step count, RPM, delay, etc.).  These are listed in
+  ``PARAM_OPCODES``.  The serial run-loop reads the extra frame and
+  calls ``dispatch_with_param(opcode, state, param_str)`` instead of
+  ``dispatch(opcode, state)``.
 """
 import logging
 import time
@@ -21,6 +28,22 @@ from firmware_emulator.src.device_state import (
 # Handler return: response can be str or list[str] for multi-response opcodes
 HandlerResponse = Union[str, List[str]]
 HandlerFunc = Callable[[DeviceState], Tuple[HandlerResponse, DeviceState]]
+# Param handler: receives state + parameter string from the second serial frame
+ParamHandlerFunc = Callable[[DeviceState, str], Tuple[HandlerResponse, DeviceState]]
+
+# Opcodes that expect a second 5-byte parameter frame on serial.
+# main.py checks this set to decide whether to read an extra frame.
+PARAM_OPCODES = frozenset({
+    "TPGDI", "BMGDI",                         # Guide motor step count
+    "TPRSP", "BMRSP",                         # Reeler RPM
+    "RMSMF",                                   # Reeler multiplication factor
+    "TPINA", "BMINA",                         # Encoder initial angle
+    "TPRTH", "BMRTH",                         # Encoder teeth count
+    "SKTRG",                                   # Skip trigger count
+    "SPM01", "SPM02",                         # SPM delay (microseconds)
+    "LONDT", "CONDT", "COFDT", "LOFDT",      # Timing configs (commented in FW)
+    "TLOND", "TCOND", "TCOFD", "TLOFD",      # Timing configs (commented in FW)
+})
 
 
 class OpcodeHandler:
@@ -29,6 +52,10 @@ class OpcodeHandler:
 
     Each opcode maps to a handler function with signature:
         handler(state: DeviceState) -> (response, new_state)
+
+    Parameter opcodes (listed in PARAM_OPCODES) additionally have a
+    *param handler* with signature:
+        handler(state: DeviceState, param: str) -> (response, new_state)
 
     response is either:
       - a single string (possibly empty for fire-and-forget commands)
@@ -54,6 +81,7 @@ class OpcodeHandler:
         """
         self.logger = logger
         self.handlers: Dict[str, HandlerFunc] = {}
+        self.param_handlers: Dict[str, ParamHandlerFunc] = {}
         self.delays: Dict[str, float] = delays or {}
 
         # Register all handlers
@@ -98,6 +126,39 @@ class OpcodeHandler:
         """List all registered opcode strings (sorted)."""
         return sorted(self.handlers.keys())
 
+    def register_param(self, opcode: str, handler: ParamHandlerFunc) -> None:
+        """Register a *parameter* handler for an opcode.
+
+        A param handler has the signature:
+            handler(state, param_str) -> (response, new_state)
+
+        The base (no-param) handler is still registered via ``register()``
+        so that dispatch() works for HTTP/test calls that don't supply a
+        parameter.  ``dispatch_with_param()`` prefers the param handler
+        when available.
+        """
+        key = opcode.upper()
+        self.param_handlers[key] = handler
+        self.logger.debug(f"Param handler registered: {key}")
+
+    def is_param_opcode(self, opcode: str) -> bool:
+        """Return True if the opcode expects a second 5-byte parameter frame."""
+        return opcode.upper() in PARAM_OPCODES
+
+    def dispatch_with_param(
+        self, opcode: str, state: DeviceState, param: str,
+    ) -> Tuple[HandlerResponse, DeviceState]:
+        """Dispatch a parameter opcode with its parameter value.
+
+        Falls back to the regular handler if no param handler is registered.
+        """
+        key = opcode.upper()
+        if key in self.param_handlers:
+            response, new_state = self.param_handlers[key](state, param)
+            return response, new_state
+        # Fallback: ignore param, dispatch normally
+        return self.dispatch(key, state)
+
     # ── Built-in handler registration ─────────────────────────────────────
 
     def _register_builtin_handlers(self) -> None:
@@ -105,6 +166,7 @@ class OpcodeHandler:
 
         # Helper shorthand
         reg = self.register
+        reg_param = self.register_param
 
         # ==================================================================
         # SEGMENT 1: COMMUNICATION / SYSTEM
@@ -363,14 +425,32 @@ class OpcodeHandler:
         reg("BMGCL", handle_bmgcl)
 
         def handle_tpgdi(s: DeviceState) -> Tuple[str, DeviceState]:
-            """tpGDI: Move top guide to steps — Phase 2 param support needed."""
-            return "", s
+            """tpGDI: Move top guide to steps — close guide (no response)."""
+            ns = s.copy()
+            ns.guide_top.position = GuidePosition.CLOSED
+            return "", ns
         reg("TPGDI", handle_tpgdi)
 
+        def handle_tpgdi_param(s: DeviceState, param: str) -> Tuple[str, DeviceState]:
+            """tpGDI with param: step count (e.g. 5000) — set guide CLOSED."""
+            ns = s.copy()
+            ns.guide_top.position = GuidePosition.CLOSED
+            return "", ns
+        reg_param("TPGDI", handle_tpgdi_param)
+
         def handle_bmgdi(s: DeviceState) -> Tuple[str, DeviceState]:
-            """bmGDI: Move bottom guide to steps — Phase 2 param support needed."""
-            return "", s
+            """bmGDI: Move bottom guide to steps — close guide (no response)."""
+            ns = s.copy()
+            ns.guide_bottom.position = GuidePosition.CLOSED
+            return "", ns
         reg("BMGDI", handle_bmgdi)
+
+        def handle_bmgdi_param(s: DeviceState, param: str) -> Tuple[str, DeviceState]:
+            """bmGDI with param: step count (e.g. 5000) — set guide CLOSED."""
+            ns = s.copy()
+            ns.guide_bottom.position = GuidePosition.CLOSED
+            return "", ns
+        reg_param("BMGDI", handle_bmgdi_param)
 
         def handle_tpgts(s: DeviceState) -> Tuple[str, DeviceState]:
             """tpGTS: Top guide test — open then close sequence."""
@@ -451,14 +531,34 @@ class OpcodeHandler:
         reg("BMSTP", handle_bmstp)
 
         def handle_tprsp(s: DeviceState) -> Tuple[str, DeviceState]:
-            """tpRSP: Set top reeler speed — Phase 2 param support needed."""
+            """tpRSP: Set top reeler speed — no response."""
             return "", s
         reg("TPRSP", handle_tprsp)
 
+        def handle_tprsp_param(s: DeviceState, param: str) -> Tuple[str, DeviceState]:
+            """tpRSP with param: RPM value (e.g. 200) — store in reeler_top.speed."""
+            ns = s.copy()
+            try:
+                ns.reeler_top.speed = int(param.strip())
+            except (ValueError, AttributeError):
+                pass  # Malformed param — ignore
+            return "", ns
+        reg_param("TPRSP", handle_tprsp_param)
+
         def handle_bmrsp(s: DeviceState) -> Tuple[str, DeviceState]:
-            """bmRSP: Set bottom reeler speed — Phase 2 param support needed."""
+            """bmRSP: Set bottom reeler speed — no response."""
             return "", s
         reg("BMRSP", handle_bmrsp)
+
+        def handle_bmrsp_param(s: DeviceState, param: str) -> Tuple[str, DeviceState]:
+            """bmRSP with param: RPM value (e.g. 200) — store in reeler_bottom.speed."""
+            ns = s.copy()
+            try:
+                ns.reeler_bottom.speed = int(param.strip())
+            except (ValueError, AttributeError):
+                pass  # Malformed param — ignore
+            return "", ns
+        reg_param("BMRSP", handle_bmrsp_param)
 
         def handle_tprtr(s: DeviceState) -> Tuple[str, DeviceState]:
             """tpRTR: Rotate top reeler (diagnostic) — responds RHD when done."""
@@ -475,7 +575,7 @@ class OpcodeHandler:
         reg("BMRTR", handle_bmrtr)
 
         def handle_rmsmf(s: DeviceState) -> Tuple[str, DeviceState]:
-            """RMSMF: Set reeler multiplication factor — Phase 2 param."""
+            """RMSMF: Set reeler multiplication factor — ignore, no response."""
             return "", s
         reg("RMSMF", handle_rmsmf)
 
@@ -492,13 +592,13 @@ class OpcodeHandler:
         reg("BMENI", handle_bmeni)
 
         def handle_tpina(s: DeviceState) -> Tuple[str, DeviceState]:
-            """tpINA: Set top encoder initial angle — Phase 2 param."""
-            ns = s.copy(); ns.encoder_top.initial_angle = 0; return "", ns
+            """tpINA: Set top encoder initial angle — ignore, no response."""
+            return "", s
         reg("TPINA", handle_tpina)
 
         def handle_bmina(s: DeviceState) -> Tuple[str, DeviceState]:
-            """bmINA: Set bottom encoder initial angle — Phase 2 param."""
-            ns = s.copy(); ns.encoder_bottom.initial_angle = 0; return "", ns
+            """bmINA: Set bottom encoder initial angle — ignore, no response."""
+            return "", s
         reg("BMINA", handle_bmina)
 
         def handle_tpeen(s: DeviceState) -> Tuple[str, DeviceState]:
@@ -518,17 +618,17 @@ class OpcodeHandler:
         reg("BMEDB", handle_bmedb)
 
         def handle_tprth(s: DeviceState) -> Tuple[str, DeviceState]:
-            """tpRTH: Set top reeler teeth count — Phase 2 param."""
+            """tpRTH: Set top reeler teeth count — ignore, no response."""
             return "", s
         reg("TPRTH", handle_tprth)
 
         def handle_bmrth(s: DeviceState) -> Tuple[str, DeviceState]:
-            """bmRTH: Set bottom reeler teeth count — Phase 2 param."""
+            """bmRTH: Set bottom reeler teeth count — ignore, no response."""
             return "", s
         reg("BMRTH", handle_bmrth)
 
         def handle_sktrg(s: DeviceState) -> Tuple[str, DeviceState]:
-            """SKTRG: Set skip trigger count — Phase 2 param."""
+            """SKTRG: Set skip trigger count — ignore, no response."""
             return "", s
         reg("SKTRG", handle_sktrg)
 
@@ -667,6 +767,20 @@ class OpcodeHandler:
                     return "", ns
                 return handler
             reg(f"LCSI{cam_idx}", _make_lcsi(cam_idx))
+
+        # ==================================================================
+        # SEGMENT 19: LIGHT / CAMERA TIMING CONFIG
+        # (Commented out in firmware — accept param silently, no-op)
+        # ==================================================================
+
+        for _timing_op in ("LONDT", "CONDT", "COFDT", "LOFDT",
+                           "TLOND", "TCOND", "TCOFD", "TLOFD"):
+            def _make_timing_noop(op=_timing_op):
+                def handler(s: DeviceState) -> Tuple[str, DeviceState]:
+                    return "", s
+                handler.__doc__ = f"{op}: Timing config — commented out in firmware, no-op."
+                return handler
+            reg(_timing_op, _make_timing_noop())
 
         # ==================================================================
         # SEGMENT 20: IET (INSPECTION EVENT TRANSITIONS)
@@ -855,14 +969,34 @@ class OpcodeHandler:
         reg("RFS02", handle_rfs02)
 
         def handle_spm01(s: DeviceState) -> Tuple[str, DeviceState]:
-            """SPM01: Set top SPM delay — Phase 2 param."""
+            """SPM01: Set top SPM delay — no response."""
             return "", s
         reg("SPM01", handle_spm01)
 
+        def handle_spm01_param(s: DeviceState, param: str) -> Tuple[str, DeviceState]:
+            """SPM01 with param: delay in microseconds (e.g. 3000)."""
+            ns = s.copy()
+            try:
+                ns.spm_delay_top = int(param.strip())
+            except (ValueError, AttributeError):
+                pass
+            return "", ns
+        reg_param("SPM01", handle_spm01_param)
+
         def handle_spm02(s: DeviceState) -> Tuple[str, DeviceState]:
-            """SPM02: Set bottom SPM delay — Phase 2 param."""
+            """SPM02: Set bottom SPM delay — no response."""
             return "", s
         reg("SPM02", handle_spm02)
+
+        def handle_spm02_param(s: DeviceState, param: str) -> Tuple[str, DeviceState]:
+            """SPM02 with param: delay in microseconds (e.g. 3000)."""
+            ns = s.copy()
+            try:
+                ns.spm_delay_bottom = int(param.strip())
+            except (ValueError, AttributeError):
+                pass
+            return "", ns
+        reg_param("SPM02", handle_spm02_param)
 
         # ==================================================================
         # SEGMENT 22: REJECTION LOGIC

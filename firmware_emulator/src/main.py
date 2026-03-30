@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from firmware_emulator.src.serial_bridge import SerialBridge
 from firmware_emulator.src.command_parser import CommandParser
-from firmware_emulator.src.opcode_handler import OpcodeHandler
+from firmware_emulator.src.opcode_handler import OpcodeHandler, PARAM_OPCODES
 from firmware_emulator.src.device_state import DeviceState
 from firmware_emulator.src.logging_config import setup_logging
 from firmware_emulator.src.state_export import StateExporter
@@ -58,17 +58,23 @@ class EmulatorEngine:
                 port=api_port,
                 command_handler=self.opcode_handler.dispatch,
                 device_state_ref=[self.device_state],
+                param_command_handler=self.opcode_handler.dispatch_with_param,
             )
         
         logger.info(f"Emulator engine initialized on {port}")
     
-    def _process_command(self, cmd_bytes: bytes) -> list:
+    def _process_command(self, cmd_bytes: bytes, param_str: str = "") -> list:
         """
         Process received command.
 
+        Args:
+            cmd_bytes: The 5-byte opcode frame.
+            param_str: Optional parameter string from a second 5-byte frame
+                       (only for parameter opcodes like TPGDI, TPRSP, etc.).
+
         Returns a list of 5-byte response frames (may be empty, single, or multi).
         """
-        print(f"[DBG-SERIAL] _process_command: raw={cmd_bytes!r}", flush=True)
+        print(f"[DBG-SERIAL] _process_command: raw={cmd_bytes!r} param={param_str!r}", flush=True)
         if not CommandParser.is_valid_command(cmd_bytes):
             logger.warning(f"Invalid command format: {cmd_bytes}")
             print(f"[DBG-SERIAL] rejected invalid command", flush=True)
@@ -78,7 +84,13 @@ class EmulatorEngine:
         print(f"[DBG-SERIAL] opcode={opcode!r}", flush=True)
 
         try:
-            response, self.device_state = self.opcode_handler.dispatch(opcode, self.device_state)
+            # Use param dispatch if a parameter was provided
+            if param_str:
+                response, self.device_state = self.opcode_handler.dispatch_with_param(
+                    opcode, self.device_state, param_str
+                )
+            else:
+                response, self.device_state = self.opcode_handler.dispatch(opcode, self.device_state)
 
             # Log the command to device state for tracking in UI
             self.device_state.log_command(opcode)
@@ -153,7 +165,20 @@ class EmulatorEngine:
                 cmd_bytes = self.serial_bridge.read_command()
                 
                 if cmd_bytes is not None:
-                    response_frames = self._process_command(cmd_bytes)
+                    # Check if this opcode expects a parameter frame
+                    param_str = ""
+                    if CommandParser.is_valid_command(cmd_bytes):
+                        opcode = CommandParser.parse(cmd_bytes).upper()
+                        if opcode in PARAM_OPCODES:
+                            # Read the second 5-byte frame containing the parameter
+                            param_bytes = self.serial_bridge.read_command()
+                            if param_bytes is not None:
+                                param_str = param_bytes.decode('ascii', errors='replace').strip()
+                                print(f"[DBG-SERIAL] param frame: {param_bytes!r} -> {param_str!r}", flush=True)
+                            else:
+                                logger.warning(f"Param opcode {opcode}: no parameter frame received (timeout)")
+
+                    response_frames = self._process_command(cmd_bytes, param_str)
                     
                     for frame in response_frames:
                         if self.serial_bridge.write_response(frame):

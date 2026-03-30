@@ -2,8 +2,8 @@
 import pytest
 from unittest.mock import MagicMock
 
-from firmware_emulator.src.opcode_handler import OpcodeHandler
-from firmware_emulator.src.device_state import DeviceState, RunState
+from firmware_emulator.src.opcode_handler import OpcodeHandler, PARAM_OPCODES
+from firmware_emulator.src.device_state import DeviceState, RunState, GuidePosition
 
 
 def test_handler_init():
@@ -289,3 +289,166 @@ class TestEmulatorControlHandlers:
 
         _, state4 = self.handler.dispatch("EMEST", state3)
         assert state4.run_state == RunState.STOPPED
+
+
+# --- Parameter Opcode Handlers ---
+
+class TestParamOpcodeHandlers:
+    """Test opcodes that expect a second 5-byte parameter frame."""
+
+    def setup_method(self):
+        self.logger = MagicMock()
+        self.handler = OpcodeHandler(self.logger)
+        self.state = DeviceState()
+
+    # -- PARAM_OPCODES set --
+
+    def test_param_opcodes_contains_tpgdi(self):
+        """TPGDI is listed as a parameter opcode."""
+        assert "TPGDI" in PARAM_OPCODES
+
+    def test_param_opcodes_contains_bmgdi(self):
+        """BMGDI is listed as a parameter opcode."""
+        assert "BMGDI" in PARAM_OPCODES
+
+    def test_param_opcodes_contains_tprsp(self):
+        """TPRSP is listed as a parameter opcode."""
+        assert "TPRSP" in PARAM_OPCODES
+
+    def test_param_opcodes_contains_spm01(self):
+        """SPM01 is listed as a parameter opcode."""
+        assert "SPM01" in PARAM_OPCODES
+
+    def test_param_opcodes_contains_timing(self):
+        """Timing config opcodes are all listed as parameter opcodes."""
+        for op in ("LONDT", "CONDT", "COFDT", "LOFDT", "TLOND", "TCOND", "TCOFD", "TLOFD"):
+            assert op in PARAM_OPCODES, f"{op} missing from PARAM_OPCODES"
+
+    def test_is_param_opcode_true(self):
+        """is_param_opcode returns True for known param opcodes."""
+        assert self.handler.is_param_opcode("TPGDI") is True
+        assert self.handler.is_param_opcode("tpgdi") is True  # Case insensitive
+
+    def test_is_param_opcode_false(self):
+        """is_param_opcode returns False for non-param opcodes."""
+        assert self.handler.is_param_opcode("QUERY") is False
+        assert self.handler.is_param_opcode("EMRUN") is False
+
+    # -- TPGDI / BMGDI: Guide close --
+
+    def test_tpgdi_no_param_sets_guide_closed(self):
+        """TPGDI without param still sets guide_top to CLOSED."""
+        self.state.guide_top.position = GuidePosition.OPEN
+        response, new_state = self.handler.dispatch("TPGDI", self.state)
+        assert response == ""
+        assert new_state.guide_top.position == GuidePosition.CLOSED
+
+    def test_tpgdi_with_param_sets_guide_closed(self):
+        """TPGDI with param (step count) sets guide_top to CLOSED."""
+        self.state.guide_top.position = GuidePosition.OPEN
+        response, new_state = self.handler.dispatch_with_param("TPGDI", self.state, "5000")
+        assert response == ""
+        assert new_state.guide_top.position == GuidePosition.CLOSED
+
+    def test_bmgdi_with_param_sets_guide_closed(self):
+        """BMGDI with param (step count) sets guide_bottom to CLOSED."""
+        self.state.guide_bottom.position = GuidePosition.OPEN
+        response, new_state = self.handler.dispatch_with_param("BMGDI", self.state, "5000")
+        assert response == ""
+        assert new_state.guide_bottom.position == GuidePosition.CLOSED
+
+    def test_tpgdi_does_not_mutate_original(self):
+        """TPGDI returns a new state; original is unmodified."""
+        self.state.guide_top.position = GuidePosition.OPEN
+        _, new_state = self.handler.dispatch_with_param("TPGDI", self.state, "5000")
+        assert self.state.guide_top.position == GuidePosition.OPEN
+        assert new_state is not self.state
+
+    # -- TPRSP / BMRSP: Reeler speed --
+
+    def test_tprsp_with_param_sets_speed(self):
+        """TPRSP with param stores RPM in reeler_top.speed."""
+        response, new_state = self.handler.dispatch_with_param("TPRSP", self.state, "200")
+        assert response == ""
+        assert new_state.reeler_top.speed == 200
+
+    def test_bmrsp_with_param_sets_speed(self):
+        """BMRSP with param stores RPM in reeler_bottom.speed."""
+        response, new_state = self.handler.dispatch_with_param("BMRSP", self.state, "200")
+        assert response == ""
+        assert new_state.reeler_bottom.speed == 200
+
+    def test_tprsp_no_param_is_noop(self):
+        """TPRSP without param doesn't change state."""
+        original_speed = self.state.reeler_top.speed
+        response, new_state = self.handler.dispatch("TPRSP", self.state)
+        assert response == ""
+        assert new_state.reeler_top.speed == original_speed
+
+    def test_tprsp_malformed_param_ignored(self):
+        """TPRSP with non-numeric param is handled gracefully."""
+        response, new_state = self.handler.dispatch_with_param("TPRSP", self.state, "abc")
+        assert response == ""
+        # Speed should be unchanged
+        assert new_state.reeler_top.speed == self.state.reeler_top.speed
+
+    # -- SPM01 / SPM02: SPM delay --
+
+    def test_spm01_with_param_sets_delay(self):
+        """SPM01 with param stores microseconds in spm_delay_top."""
+        response, new_state = self.handler.dispatch_with_param("SPM01", self.state, "3000")
+        assert response == ""
+        assert new_state.spm_delay_top == 3000
+
+    def test_spm02_with_param_sets_delay(self):
+        """SPM02 with param stores microseconds in spm_delay_bottom."""
+        response, new_state = self.handler.dispatch_with_param("SPM02", self.state, "3000")
+        assert response == ""
+        assert new_state.spm_delay_bottom == 3000
+
+    # -- No-op param opcodes --
+
+    def test_rmsmf_registered(self):
+        """RMSMF handler is registered."""
+        assert "RMSMF" in self.handler.list_handlers()
+
+    def test_rmsmf_no_response(self):
+        """RMSMF returns empty response (no-op)."""
+        response, new_state = self.handler.dispatch("RMSMF", self.state)
+        assert response == ""
+
+    def test_sktrg_no_response(self):
+        """SKTRG returns empty response (no-op)."""
+        response, new_state = self.handler.dispatch("SKTRG", self.state)
+        assert response == ""
+
+    def test_tpina_no_response(self):
+        """TPINA returns empty response (no-op)."""
+        response, new_state = self.handler.dispatch("TPINA", self.state)
+        assert response == ""
+
+    def test_tprth_no_response(self):
+        """TPRTH returns empty response (no-op)."""
+        response, new_state = self.handler.dispatch("TPRTH", self.state)
+        assert response == ""
+
+    # -- Timing config opcodes (Segment 19) --
+
+    def test_timing_opcodes_registered(self):
+        """All 8 timing config opcodes are registered."""
+        handlers = self.handler.list_handlers()
+        for op in ("LONDT", "CONDT", "COFDT", "LOFDT", "TLOND", "TCOND", "TCOFD", "TLOFD"):
+            assert op in handlers, f"{op} not registered"
+
+    def test_timing_opcodes_return_empty(self):
+        """Timing config opcodes return empty string (no response)."""
+        for op in ("LONDT", "CONDT", "COFDT", "LOFDT", "TLOND", "TCOND", "TCOFD", "TLOFD"):
+            response, _ = self.handler.dispatch(op, self.state)
+            assert response == "", f"{op} returned {response!r}, expected empty"
+
+    # -- dispatch_with_param fallback --
+
+    def test_dispatch_with_param_falls_back_to_dispatch(self):
+        """dispatch_with_param for non-param opcode falls back to normal dispatch."""
+        response, new_state = self.handler.dispatch_with_param("QUERY", self.state, "ignored")
+        assert response == "YES"
