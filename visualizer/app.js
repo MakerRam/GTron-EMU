@@ -231,7 +231,7 @@ function renderLamps(state) {
 function renderCameras(state) {
     if (!state) return;
 
-    for (let i = 0; i <= 6; i++) {
+    for (let i = 1; i <= 6; i++) {
         const dot = document.getElementById(`cam-${i}`).querySelector('.cam-dot');
         dot.className = 'cam-dot';
         if (state.cameras.flags[String(i)]) {
@@ -250,16 +250,25 @@ function renderCameras(state) {
 function renderControlButtons(state) {
     if (!state) return;
 
+    const lightPower = document.getElementById('light-power');
     const lightRun = document.getElementById('light-run');
     const lightPause = document.getElementById('light-pause');
     const lightStop = document.getElementById('light-stop');
     const lightBuzzer = document.getElementById('light-buzzer-off');
+    const lightEstop = document.getElementById('light-estop');
 
     // Reset all lights
+    lightPower.className = 'control-light';
     lightRun.className = 'control-light';
     lightPause.className = 'control-light';
     lightStop.className = 'control-light';
     lightBuzzer.className = 'control-light';
+    lightEstop.className = 'control-light';
+
+    // Power On light: active when power_on is true
+    if (state.power_on) {
+        lightPower.classList.add('active-power');
+    }
 
     // Set active light based on run_state
     const runState = state.run_state || 'running';
@@ -274,6 +283,11 @@ function renderControlButtons(state) {
     // Buzzer override light
     if (state.buzzer_override) {
         lightBuzzer.classList.add('active-buzzer');
+    }
+
+    // Emergency Exit light: active when estop_pressed is true
+    if (state.estop_pressed) {
+        lightEstop.classList.add('active-estop');
     }
 }
 
@@ -500,7 +514,7 @@ async function sendControlCommand(opcode, buttonId) {
  */
 function updateControlButtonsDisabled() {
     const isMock = CONFIG.mode === 'mock';
-    const buttons = ['btn-run', 'btn-pause', 'btn-stop', 'btn-buzzer-off'];
+    const buttons = ['btn-power', 'btn-run', 'btn-pause', 'btn-stop', 'btn-buzzer-off', 'btn-estop'];
     buttons.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
@@ -516,10 +530,12 @@ function updateControlButtonsDisabled() {
  */
 function onControlClick(opcode) {
     const opcodeToButton = {
+        'PWRON': 'btn-power',
         'EMRUN': 'btn-run',
         'EMPAU': 'btn-pause',
         'EMSTP': 'btn-stop',
-        'BZZOF': 'btn-buzzer-off'
+        'BZZOF': 'btn-buzzer-off',
+        'EMEXI': 'btn-estop'
     };
     const buttonId = opcodeToButton[opcode];
     if (buttonId) {

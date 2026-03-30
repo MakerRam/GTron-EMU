@@ -274,11 +274,11 @@ header h1 .logo-icon {
    +---col1---+---col2---+---col3---+--col4--+
    | Front Panel (1-3)              | Tower  | row 1
    |                                | Lamp   |
-   +------+----------+-------------+ (1-2)  | row 2
-   | Cameras (1-3)                  +--------+
-   |                                | System |
-   +----------+----------+---------+ Status  | row 3
-   | Sag      | Guide    | Reeler  | (2-3)  |
+   +------+----------+-------------+--------+
+   | Cameras (1-3)                  | System | row 2
+   |                                | Status |
+   +----------+----------+---------+ (2-3)  | row 3
+   | Sag      | Guide    | Reeler  |        |
    +----------+----------+---------+--------+
 */
 .dashboard-grid {
@@ -291,7 +291,7 @@ header h1 .logo-icon {
 
 /* Explicit grid placement for each panel */
 #panel-control  { grid-column: 1 / 4; grid-row: 1; }
-#panel-lamps    { grid-column: 4;     grid-row: 1 / 3; }
+#panel-lamps    { grid-column: 4;     grid-row: 1; }
 #panel-cameras  { grid-column: 1 / 4; grid-row: 2; }
 #panel-system   { grid-column: 4;     grid-row: 2 / 4; }
 #panel-sag      { grid-column: 1;     grid-row: 3; }
@@ -709,10 +709,10 @@ header h1 .logo-icon {
     animation: pulse-dot 0.4s ease-in-out infinite;
 }
 
-/* --- Emulator Control Buttons --- */
+/* --- Front Panel Control Buttons --- */
 .control-buttons-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(6, 1fr);
     gap: 8px;
 }
 
@@ -747,10 +747,12 @@ header h1 .logo-icon {
     cursor: not-allowed;
 }
 
+.control-btn-power { border-left: 3px solid var(--cyan); }
 .control-btn-run { border-left: 3px solid var(--green); }
 .control-btn-pause { border-left: 3px solid var(--yellow); }
 .control-btn-stop { border-left: 3px solid var(--red); }
 .control-btn-buzzer { border-left: 3px solid var(--blue); }
+.control-btn-estop { border-left: 3px solid var(--red); }
 
 .control-light {
     width: 10px;
@@ -786,6 +788,19 @@ header h1 .logo-icon {
     border-color: var(--green);
 }
 
+.control-light.active-power {
+    background: var(--cyan);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+    border-color: var(--cyan);
+}
+
+.control-light.active-estop {
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+    border-color: var(--red);
+    animation: pulse-dot 0.4s ease-in-out infinite;
+}
+
 .control-btn-label {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -796,7 +811,7 @@ header h1 .logo-icon {
 /* --- Cameras --- */
 .camera-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 6px;
     margin-bottom: 10px;
 }
@@ -1017,6 +1032,6 @@ header h1 .logo-icon {
     }
 
     .camera-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
