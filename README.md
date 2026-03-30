@@ -221,6 +221,39 @@ Download and install **com0com**:
 python3 firmware_emulator/src/main.py --help
 ```
 
+## Quick Start
+
+Start the emulator, API server, and visualizer dashboard with a **single command**:
+
+```bash
+python start.py --port COM2
+```
+
+This launches all three services:
+- Firmware emulator (serial on your COM port)
+- REST API server at `http://localhost:5000`
+- Visualizer dashboard at `http://localhost:8000/index.html`
+
+Then open `http://localhost:8000/index.html` in your browser, click **LIVE** to connect.
+
+**All flags:**
+
+```
+python start.py --help
+
+  --port PORT             Serial COM port (required, e.g. COM2 or /dev/ttyS1)
+  --baudrate BAUDRATE     Baud rate (default: 115200)
+  --api-port API_PORT     Flask API server port (default: 5000)
+  --visualizer-port PORT  Visualizer HTTP server port (default: 8000)
+  --rtscts                Enable RTS/CTS flow control
+  --dsrdtr                Enable DSR/DTR flow control
+  --verbose               Show real-time serial commands in console
+```
+
+Press **Ctrl+C** to stop all services.
+
+---
+
 ## Usage: Two-Terminal Workflow
 
 ### Terminal 1: Start Emulator (Backend Daemon)
@@ -251,6 +284,16 @@ labview &
 # 3. App sends QUERY → emulator responds YES
 # 4. Full communication begins automatically
 ```
+
+## Advanced: GUI Launcher
+
+A Tkinter-based GUI launcher is available for users who prefer a graphical interface:
+
+```bash
+python emulator_launcher.py
+```
+
+This provides Start/Stop buttons, live log output, and flow control options. It starts only the emulator (not the visualizer server) — use `start.py` for the full stack.
 
 ### Monitoring Output Example
 
