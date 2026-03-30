@@ -24,6 +24,7 @@ import subprocess
 import sys
 import threading
 import time
+import webbrowser
 from pathlib import Path
 
 
@@ -94,6 +95,8 @@ Examples:
     parser.add_argument("--rtscts", action="store_true", help="Enable RTS/CTS flow control")
     parser.add_argument("--dsrdtr", action="store_true", help="Enable DSR/DTR flow control")
     parser.add_argument("--verbose", action="store_true", help="Pass --verbose to emulator")
+    parser.add_argument("--no-browser", action="store_true", dest="no_browser",
+                        help="Do not auto-open browser on startup")
     return parser
 
 
@@ -220,7 +223,13 @@ def main() -> None:
     print(f"     http://localhost:{args.visualizer_port}/index.html")
     print()
 
-    # 6. Main wait loop — block until Ctrl+C or emulator dies
+    # 6. Auto-open browser unless --no-browser was passed
+    if not args.no_browser:
+        url = f"http://localhost:{args.visualizer_port}/index.html"
+        print(f"[OK] Opening browser: {url}")
+        webbrowser.open(url)
+
+    # 7. Main wait loop — block until Ctrl+C or emulator dies
     try:
         while True:
             if proc.poll() is not None:
