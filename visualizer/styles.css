@@ -1,5 +1,5 @@
 /* ============================================
-   Vision System Monitor - Industrial Grey Theme
+   Gtron System Emulator - Industrial Grey Theme
    Modern, clean, professional HMI look
    ============================================ */
 
@@ -269,13 +269,34 @@ header h1 .logo-icon {
     display: inline-block;
 }
 
-/* --- Dashboard Grid --- */
+/* --- Dashboard Grid ---
+   Layout Map (desktop, 4 columns x 3 rows):
+   +---col1---+---col2---+---col3---+--col4--+
+   | Front Panel (1-3)              | Tower  | row 1
+   |                                | Lamp   |
+   +------+----------+-------------+ (1-2)  | row 2
+   | Cameras (1-3)                  +--------+
+   |                                | System |
+   +----------+----------+---------+ Status  | row 3
+   | Sag      | Guide    | Reeler  | (2-3)  |
+   +----------+----------+---------+--------+
+*/
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 0.8fr;
+    grid-template-rows: auto auto auto;
     gap: var(--gap);
     padding: var(--gap);
 }
+
+/* Explicit grid placement for each panel */
+#panel-control  { grid-column: 1 / 4; grid-row: 1; }
+#panel-lamps    { grid-column: 4;     grid-row: 1 / 3; }
+#panel-cameras  { grid-column: 1 / 4; grid-row: 2; }
+#panel-system   { grid-column: 4;     grid-row: 2 / 4; }
+#panel-sag      { grid-column: 1;     grid-row: 3; }
+#panel-guides   { grid-column: 2;     grid-row: 3; }
+#panel-reelers  { grid-column: 3;     grid-row: 3; }
 
 /* --- Panel --- */
 .panel {
@@ -940,12 +961,41 @@ header h1 .logo-icon {
 @media (max-width: 960px) {
     .dashboard-grid {
         grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+    }
+    /* Reset all explicit placement for 2-column flow */
+    #panel-control,
+    #panel-lamps,
+    #panel-cameras,
+    #panel-system,
+    #panel-sag,
+    #panel-guides,
+    #panel-reelers {
+        grid-column: auto;
+        grid-row: auto;
+    }
+    /* Let wide panels span both columns */
+    #panel-control,
+    #panel-cameras {
+        grid-column: 1 / -1;
     }
 }
 
 @media (max-width: 640px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    /* Reset all explicit placement for single-column flow */
+    #panel-control,
+    #panel-lamps,
+    #panel-cameras,
+    #panel-system,
+    #panel-sag,
+    #panel-guides,
+    #panel-reelers {
+        grid-column: auto;
+        grid-row: auto;
     }
 
     header {
