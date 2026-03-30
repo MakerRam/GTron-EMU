@@ -19,6 +19,7 @@ let lastSeenCommand = null;
 let fetching = false;
 let pollTimer = null;
 let mockTimer = null;
+let previousState = null;  // Track previous state for blink-on-change detection
 
 // ============================================
 // State Provider
@@ -164,15 +165,18 @@ function renderSagSensors(state) {
     if (!state) return;
 
     const sags = [
-        { id: 'sag-top-upper', triggered: state.sag_top_upper },
-        { id: 'sag-top-lower', triggered: state.sag_top_lower },
-        { id: 'sag-btm-upper', triggered: state.sag_bottom_upper },
-        { id: 'sag-btm-lower', triggered: state.sag_bottom_lower }
+        { id: 'sag-top-upper', triggered: state.sag_top_upper, prevKey: 'sag_top_upper' },
+        { id: 'sag-top-lower', triggered: state.sag_top_lower, prevKey: 'sag_top_lower' },
+        { id: 'sag-btm-upper', triggered: state.sag_bottom_upper, prevKey: 'sag_bottom_upper' },
+        { id: 'sag-btm-lower', triggered: state.sag_bottom_lower, prevKey: 'sag_bottom_lower' }
     ];
 
-    sags.forEach(({ id, triggered }) => {
+    sags.forEach(({ id, triggered, prevKey }) => {
         const indicator = document.getElementById(id);
         const text = document.getElementById(id + '-text');
+
+        // Detect state change for blink
+        const changed = previousState && previousState[prevKey] !== triggered;
 
         indicator.className = 'sag-indicator';
         if (triggered) {
@@ -184,17 +188,28 @@ function renderSagSensors(state) {
             text.textContent = 'PASS';
             text.style.color = 'var(--green)';
         }
+
+        // Trigger blink on state change
+        if (changed) {
+            indicator.classList.add('blink');
+            indicator.addEventListener('animationend', () => {
+                indicator.classList.remove('blink');
+            }, { once: true });
+        }
     });
 
     // Proximity sensors
     const sensors = [
-        { id: 'sensor-top', data: state.sensor_top },
-        { id: 'sensor-btm', data: state.sensor_bottom }
+        { id: 'sensor-top', data: state.sensor_top, prevData: previousState ? previousState.sensor_top : null },
+        { id: 'sensor-btm', data: state.sensor_bottom, prevData: previousState ? previousState.sensor_bottom : null }
     ];
 
-    sensors.forEach(({ id, data }) => {
+    sensors.forEach(({ id, data, prevData }) => {
         const indicator = document.getElementById(id);
         const text = document.getElementById(id + '-text');
+
+        // Detect state change for blink
+        const changed = prevData && (prevData.triggered !== data.triggered || prevData.powered !== data.powered);
 
         indicator.className = 'sag-indicator';
         if (data.triggered) {
@@ -205,6 +220,14 @@ function renderSagSensors(state) {
             text.textContent = 'OK';
         } else {
             text.textContent = 'OFF';
+        }
+
+        // Trigger blink on state change
+        if (changed) {
+            indicator.classList.add('blink');
+            indicator.addEventListener('animationend', () => {
+                indicator.classList.remove('blink');
+            }, { once: true });
         }
     });
 }
@@ -423,6 +446,9 @@ function renderAll(state) {
     renderQueryStatus(state, CONFIG.mode === 'mock' ? 'mock' : 'connected');
     renderCommandLog();
     renderCycleLabel(state);
+
+    // Save state for blink-on-change detection in next render cycle
+    previousState = state;
 }
 
 // ============================================
@@ -471,7 +497,7 @@ const debouncedButtons = new Set();
  * Handles debounce: disables the button for 500ms, then re-enables
  * on next successful state poll.
  *
- * @param {string} opcode - One of EMRUN, EMPAU, EMEST, BZZOF
+ * @param {string} opcode - One of RUN, PAU, STP, BOF, PWRON, EMEXI
  * @param {string} buttonId - DOM id of the button that was clicked
  */
 async function sendControlCommand(opcode, buttonId) {
@@ -531,15 +557,57 @@ function updateControlButtonsDisabled() {
 function onControlClick(opcode) {
     const opcodeToButton = {
         'PWRON': 'btn-power',
-        'EMRUN': 'btn-run',
-        'EMPAU': 'btn-pause',
-        'EMEST': 'btn-stop',
-        'BZZOF': 'btn-buzzer-off',
+        'RUN': 'btn-run',
+        'PAU': 'btn-pause',
+        'STP': 'btn-stop',
+        'BOF': 'btn-buzzer-off',
         'EMEXI': 'btn-estop'
     };
     const buttonId = opcodeToButton[opcode];
     if (buttonId) {
         sendControlCommand(opcode, buttonId);
+    }
+}
+
+/**
+ * onclick handler for clickable sensor rows (sag sensors, proximity sensors).
+ * Sends a placeholder opcode to the API and triggers a blink on the indicator.
+ * Backend handlers for these opcodes will be added later.
+ *
+ * Placeholder opcodes:
+ *   STTU = Sag Toggle Top Upper
+ *   STTL = Sag Toggle Top Lower
+ *   STBU = Sag Toggle Bottom Upper
+ *   STBL = Sag Toggle Bottom Lower
+ *   PTST = Proximity Toggle Sensor Top
+ *   PTSB = Proximity Toggle Sensor Bottom
+ *
+ * @param {string} opcode - Placeholder opcode to send
+ * @param {string} indicatorId - DOM id of the indicator element to blink
+ */
+async function onSensorClick(opcode, indicatorId) {
+    if (CONFIG.mode === 'mock') return;
+
+    const indicator = document.getElementById(indicatorId);
+    if (!indicator) return;
+
+    // Trigger blink animation
+    indicator.classList.add('blink');
+    indicator.addEventListener('animationend', () => {
+        indicator.classList.remove('blink');
+    }, { once: true });
+
+    // Send command to API (will return FLS until backend handlers are added)
+    try {
+        const url = document.getElementById('api-url').value || CONFIG.apiUrl;
+        await fetch(url + '/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: opcode }),
+            signal: AbortSignal.timeout(2000)
+        });
+    } catch (e) {
+        console.error(`Sensor command ${opcode} error:`, e);
     }
 }
 

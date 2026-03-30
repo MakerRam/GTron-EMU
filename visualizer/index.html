@@ -64,19 +64,19 @@
                         <span class="control-light" id="light-power"></span>
                         <span class="control-btn-label">PWR ON</span>
                     </button>
-                    <button class="control-btn control-btn-run" id="btn-run" onclick="onControlClick('EMRUN')">
+                    <button class="control-btn control-btn-run" id="btn-run" onclick="onControlClick('RUN')">
                         <span class="control-light" id="light-run"></span>
                         <span class="control-btn-label">RUN</span>
                     </button>
-                    <button class="control-btn control-btn-pause" id="btn-pause" onclick="onControlClick('EMPAU')">
+                    <button class="control-btn control-btn-pause" id="btn-pause" onclick="onControlClick('PAU')">
                         <span class="control-light" id="light-pause"></span>
                         <span class="control-btn-label">PAUSE</span>
                     </button>
-                    <button class="control-btn control-btn-stop" id="btn-stop" onclick="onControlClick('EMEST')">
+                    <button class="control-btn control-btn-stop" id="btn-stop" onclick="onControlClick('STP')">
                         <span class="control-light" id="light-stop"></span>
                         <span class="control-btn-label">STOP</span>
                     </button>
-                    <button class="control-btn control-btn-buzzer" id="btn-buzzer-off" onclick="onControlClick('BZZOF')">
+                    <button class="control-btn control-btn-buzzer" id="btn-buzzer-off" onclick="onControlClick('BOF')">
                         <span class="control-light" id="light-buzzer-off"></span>
                         <span class="control-btn-label">BZR OFF</span>
                     </button>
@@ -213,22 +213,22 @@
             </h2>
             <div class="panel-content" id="sag-sensors">
                 <div class="sag-group">
-                    <div class="sag-row">
+                    <div class="sag-row clickable" onclick="onSensorClick('STTU', 'sag-top-upper')">
                         <span class="sag-label">TOP UPPER</span>
                         <span class="sag-indicator" id="sag-top-upper"></span>
                         <span class="sag-value" id="sag-top-upper-text">PASS</span>
                     </div>
-                    <div class="sag-row">
+                    <div class="sag-row clickable" onclick="onSensorClick('STTL', 'sag-top-lower')">
                         <span class="sag-label">TOP LOWER</span>
                         <span class="sag-indicator" id="sag-top-lower"></span>
                         <span class="sag-value" id="sag-top-lower-text">PASS</span>
                     </div>
-                    <div class="sag-row">
+                    <div class="sag-row clickable" onclick="onSensorClick('STBU', 'sag-btm-upper')">
                         <span class="sag-label">BTM UPPER</span>
                         <span class="sag-indicator" id="sag-btm-upper"></span>
                         <span class="sag-value" id="sag-btm-upper-text">PASS</span>
                     </div>
-                    <div class="sag-row">
+                    <div class="sag-row clickable" onclick="onSensorClick('STBL', 'sag-btm-lower')">
                         <span class="sag-label">BTM LOWER</span>
                         <span class="sag-indicator" id="sag-btm-lower"></span>
                         <span class="sag-value" id="sag-btm-lower-text">PASS</span>
@@ -236,12 +236,12 @@
                 </div>
                 <h3>Proximity Sensors</h3>
                 <div class="sag-group">
-                    <div class="sag-row">
+                    <div class="sag-row clickable" onclick="onSensorClick('PTST', 'sensor-top')">
                         <span class="sag-label">SENSOR TOP</span>
                         <span class="sag-indicator" id="sensor-top"></span>
                         <span class="sag-value" id="sensor-top-text">--</span>
                     </div>
-                    <div class="sag-row">
+                    <div class="sag-row clickable" onclick="onSensorClick('PTSB', 'sensor-btm')">
                         <span class="sag-label">SENSOR BTM</span>
                         <span class="sag-indicator" id="sensor-btm"></span>
                         <span class="sag-value" id="sensor-btm-text">--</span>

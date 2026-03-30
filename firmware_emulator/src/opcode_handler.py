@@ -1028,33 +1028,37 @@ class OpcodeHandler:
         # ==================================================================
         # EMULATOR-ONLY OPCODES (UI Control Buttons)
         # ==================================================================
-        # These are NOT part of the real hardware protocol.
-        # They exist for the dashboard UI to control emulator run state.
+        # SEGMENT 4: PUSH BUTTON PRESS RESPONSES
+        # ==================================================================
+        # These opcodes are sent back to LabVIEW when the corresponding
+        # front-panel buttons are pressed (physically or via dashboard UI).
+        # Real firmware defines: RUN_PRESS="RUN", PAUSE_PRESS="PAU",
+        # STOP_PRESS="STP", BUZZEROFF_PRESS="BOF"
 
-        def handle_emrun(s: DeviceState) -> Tuple[str, DeviceState]:
-            """EMRUN: Set emulator to RUNNING."""
+        def handle_run(s: DeviceState) -> Tuple[str, DeviceState]:
+            """RUN: RUN button pressed — set emulator to RUNNING."""
             ns = s.copy()
             ns.run_state = RunState.RUNNING
-            return "EMROK", ns
-        reg("EMRUN", handle_emrun)
+            return "RUN", ns
+        reg("RUN", handle_run)
 
-        def handle_empau(s: DeviceState) -> Tuple[str, DeviceState]:
-            """EMPAU: Set emulator to PAUSED."""
+        def handle_pau(s: DeviceState) -> Tuple[str, DeviceState]:
+            """PAU: PAUSE button pressed — set emulator to PAUSED."""
             ns = s.copy()
             ns.run_state = RunState.PAUSED
-            return "EMPOK", ns
-        reg("EMPAU", handle_empau)
+            return "PAU", ns
+        reg("PAU", handle_pau)
 
-        def handle_emest(s: DeviceState) -> Tuple[str, DeviceState]:
-            """EMEST: Set emulator to STOPPED (renamed from EMSTP to avoid collision)."""
+        def handle_stp(s: DeviceState) -> Tuple[str, DeviceState]:
+            """STP: STOP button pressed — set emulator to STOPPED."""
             ns = s.copy()
             ns.run_state = RunState.STOPPED
-            return "EMSOK", ns
-        reg("EMEST", handle_emest)
+            return "STP", ns
+        reg("STP", handle_stp)
 
-        def handle_bzzof(s: DeviceState) -> Tuple[str, DeviceState]:
-            """BZZOF: Buzzer override (silence buzzer)."""
+        def handle_bof(s: DeviceState) -> Tuple[str, DeviceState]:
+            """BOF: BUZZER OFF button pressed — silence buzzer."""
             ns = s.copy()
             ns.buzzer_override = True
-            return "BZZOK", ns
-        reg("BZZOF", handle_bzzof)
+            return "BOF", ns
+        reg("BOF", handle_bof)

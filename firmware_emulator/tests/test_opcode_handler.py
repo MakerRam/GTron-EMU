@@ -192,102 +192,102 @@ def test_handler_multiple_dispatch():
     assert response2 == "DL1"
 
 
-# --- Emulator Control Opcode Handlers ---
+# --- Push Button Press Response Handlers (Segment 4) ---
 
-class TestEmulatorControlHandlers:
-    """Test EMRUN, EMPAU, EMSTP, BZZOF opcode handlers."""
+class TestPushButtonHandlers:
+    """Test RUN, PAU, STP, BOF opcode handlers (Segment 4: Push Button Press Responses)."""
 
     def setup_method(self):
         self.logger = MagicMock()
         self.handler = OpcodeHandler(self.logger)
         self.state = DeviceState()
 
-    def test_emrun_registered(self):
-        """EMRUN handler is registered."""
-        assert "EMRUN" in self.handler.list_handlers()
+    def test_run_registered(self):
+        """RUN handler is registered."""
+        assert "RUN" in self.handler.list_handlers()
 
-    def test_empau_registered(self):
-        """EMPAU handler is registered."""
-        assert "EMPAU" in self.handler.list_handlers()
+    def test_pau_registered(self):
+        """PAU handler is registered."""
+        assert "PAU" in self.handler.list_handlers()
 
-    def test_emstp_registered(self):
-        """EMEST handler is registered (emulator-only stop)."""
-        assert "EMEST" in self.handler.list_handlers()
+    def test_stp_registered(self):
+        """STP handler is registered."""
+        assert "STP" in self.handler.list_handlers()
 
-    def test_bzzof_registered(self):
-        """BZZOF handler is registered."""
-        assert "BZZOF" in self.handler.list_handlers()
+    def test_bof_registered(self):
+        """BOF handler is registered."""
+        assert "BOF" in self.handler.list_handlers()
 
-    def test_emrun_sets_running(self):
-        """EMRUN sets run_state to RUNNING and returns EMROK."""
-        response, new_state = self.handler.dispatch("EMRUN", self.state)
-        assert response == "EMROK"
+    def test_run_sets_running(self):
+        """RUN sets run_state to RUNNING and returns RUN."""
+        response, new_state = self.handler.dispatch("RUN", self.state)
+        assert response == "RUN"
         assert new_state.run_state == RunState.RUNNING
 
-    def test_empau_sets_paused(self):
-        """EMPAU sets run_state to PAUSED and returns EMPOK."""
+    def test_pau_sets_paused(self):
+        """PAU sets run_state to PAUSED and returns PAU."""
         self.state.run_state = RunState.RUNNING
-        response, new_state = self.handler.dispatch("EMPAU", self.state)
-        assert response == "EMPOK"
+        response, new_state = self.handler.dispatch("PAU", self.state)
+        assert response == "PAU"
         assert new_state.run_state == RunState.PAUSED
 
-    def test_emstp_sets_stopped(self):
-        """EMEST sets run_state to STOPPED and returns EMSOK."""
+    def test_stp_sets_stopped(self):
+        """STP sets run_state to STOPPED and returns STP."""
         self.state.run_state = RunState.RUNNING
-        response, new_state = self.handler.dispatch("EMEST", self.state)
-        assert response == "EMSOK"
+        response, new_state = self.handler.dispatch("STP", self.state)
+        assert response == "STP"
         assert new_state.run_state == RunState.STOPPED
 
-    def test_bzzof_sets_buzzer_override(self):
-        """BZZOF sets buzzer_override to True and returns BZZOK."""
+    def test_bof_sets_buzzer_override(self):
+        """BOF sets buzzer_override to True and returns BOF."""
         assert self.state.buzzer_override is False
-        response, new_state = self.handler.dispatch("BZZOF", self.state)
-        assert response == "BZZOK"
+        response, new_state = self.handler.dispatch("BOF", self.state)
+        assert response == "BOF"
         assert new_state.buzzer_override is True
 
-    def test_emrun_returns_new_state(self):
-        """EMRUN returns a new state object (immutable pattern)."""
-        response, new_state = self.handler.dispatch("EMRUN", self.state)
+    def test_run_returns_new_state(self):
+        """RUN returns a new state object (immutable pattern)."""
+        response, new_state = self.handler.dispatch("RUN", self.state)
         assert new_state is not self.state
 
-    def test_empau_returns_new_state(self):
-        """EMPAU returns a new state object."""
-        response, new_state = self.handler.dispatch("EMPAU", self.state)
+    def test_pau_returns_new_state(self):
+        """PAU returns a new state object."""
+        response, new_state = self.handler.dispatch("PAU", self.state)
         assert new_state is not self.state
 
-    def test_emstp_returns_new_state(self):
-        """EMEST returns a new state object."""
-        response, new_state = self.handler.dispatch("EMEST", self.state)
+    def test_stp_returns_new_state(self):
+        """STP returns a new state object."""
+        response, new_state = self.handler.dispatch("STP", self.state)
         assert new_state is not self.state
 
-    def test_bzzof_returns_new_state(self):
-        """BZZOF returns a new state object."""
-        response, new_state = self.handler.dispatch("BZZOF", self.state)
+    def test_bof_returns_new_state(self):
+        """BOF returns a new state object."""
+        response, new_state = self.handler.dispatch("BOF", self.state)
         assert new_state is not self.state
 
-    def test_emrun_does_not_mutate_original(self):
-        """EMRUN does not mutate the original state."""
+    def test_run_does_not_mutate_original(self):
+        """RUN does not mutate the original state."""
         original_run_state = self.state.run_state
-        self.handler.dispatch("EMRUN", self.state)
+        self.handler.dispatch("RUN", self.state)
         assert self.state.run_state == original_run_state
 
-    def test_bzzof_does_not_mutate_original(self):
-        """BZZOF does not mutate the original state."""
+    def test_bof_does_not_mutate_original(self):
+        """BOF does not mutate the original state."""
         assert self.state.buzzer_override is False
-        self.handler.dispatch("BZZOF", self.state)
+        self.handler.dispatch("BOF", self.state)
         assert self.state.buzzer_override is False
 
     def test_full_run_pause_stop_cycle(self):
         """Test full lifecycle: STOPPED -> RUNNING -> PAUSED -> STOPPED."""
         assert self.state.run_state == RunState.STOPPED
 
-        _, state2 = self.handler.dispatch("EMRUN", self.state)
+        _, state2 = self.handler.dispatch("RUN", self.state)
         assert state2.run_state == RunState.RUNNING
 
-        _, state3 = self.handler.dispatch("EMPAU", state2)
+        _, state3 = self.handler.dispatch("PAU", state2)
         assert state3.run_state == RunState.PAUSED
 
-        _, state4 = self.handler.dispatch("EMEST", state3)
+        _, state4 = self.handler.dispatch("STP", state3)
         assert state4.run_state == RunState.STOPPED
 
 
@@ -332,7 +332,7 @@ class TestParamOpcodeHandlers:
     def test_is_param_opcode_false(self):
         """is_param_opcode returns False for non-param opcodes."""
         assert self.handler.is_param_opcode("QUERY") is False
-        assert self.handler.is_param_opcode("EMRUN") is False
+        assert self.handler.is_param_opcode("RUN") is False
 
     # -- TPGDI / BMGDI: Guide close --
 
