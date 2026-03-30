@@ -6,9 +6,10 @@
 const CONFIG = {
     apiUrl: 'http://localhost:5000',
     pollInterval: 100,          // ms - how often to fetch state in LIVE mode
-    mockCycleInterval: 500,     // ms - how often to advance mock state
+    mockCycleInterval: 500,     // ms - how often to advance mock state (Mock 1)
+    mock2PollInterval: 100,     // ms - how often to poll Mock 2 engine state
     maxLogEntries: 20,
-    mode: 'live'                // 'mock' or 'live'
+    mode: 'live'                // 'mock1', 'mock2', or 'live'
 };
 
 // --- State ---
@@ -53,8 +54,10 @@ async function fetchLiveState() {
 }
 
 async function fetchState() {
-    if (CONFIG.mode === 'mock') {
+    if (CONFIG.mode === 'mock1') {
         return getMockState();
+    } else if (CONFIG.mode === 'mock2') {
+        return Mock2Engine.getState();
     } else {
         return await fetchLiveState();
     }
@@ -443,7 +446,7 @@ function renderAll(state) {
     renderSystemStatus(state);
     renderControlButtons(state);
     renderLightChannels(state);
-    renderQueryStatus(state, CONFIG.mode === 'mock' ? 'mock' : 'connected');
+    renderQueryStatus(state, (CONFIG.mode === 'mock1' || CONFIG.mode === 'mock2') ? 'mock' : 'connected');
     renderCommandLog();
     renderCycleLabel(state);
 
@@ -456,10 +459,19 @@ function renderAll(state) {
 // ============================================
 
 function setMode(mode) {
+    // Tear down Mock 2 if leaving it
+    if (CONFIG.mode === 'mock2' && mode !== 'mock2') {
+        Mock2Engine.destroy();
+    }
+
     CONFIG.mode = mode;
 
-    // Update button styles
-    document.getElementById('btn-mock').classList.toggle('active', mode === 'mock');
+    // Toggle body class for mock2-specific CSS overrides (e.g., white camera flash)
+    document.body.classList.toggle('mock2-mode', mode === 'mock2');
+
+    // Update button styles (3 buttons)
+    document.getElementById('btn-mock1').classList.toggle('active', mode === 'mock1');
+    document.getElementById('btn-mock2').classList.toggle('active', mode === 'mock2');
     document.getElementById('btn-live').classList.toggle('active', mode === 'live');
 
     // Show/hide API URL input
@@ -471,10 +483,15 @@ function setMode(mode) {
     currentMockIndex = 0;
 
     // Update connection status
-    if (mode === 'mock') {
+    if (mode === 'mock1' || mode === 'mock2') {
         renderConnectionStatus('mock');
     } else {
         renderConnectionStatus('connected');
+    }
+
+    // Initialize Mock 2 engine when entering that mode
+    if (mode === 'mock2') {
+        Mock2Engine.init();
     }
 
     // Update control button state for mock mode
@@ -501,10 +518,16 @@ const debouncedButtons = new Set();
  * @param {string} buttonId - DOM id of the button that was clicked
  */
 async function sendControlCommand(opcode, buttonId) {
-    if (CONFIG.mode === 'mock') return; // no-op in mock mode
+    if (CONFIG.mode === 'mock1') return; // no-op in mock1 mode
 
     const btn = document.getElementById(buttonId);
     if (!btn || btn.disabled) return;
+
+    // In mock2 mode, route to Mock2Engine
+    if (CONFIG.mode === 'mock2') {
+        Mock2Engine.handleButton(opcode);
+        return;
+    }
 
     // Debounce: disable button immediately
     btn.disabled = true;
@@ -528,7 +551,7 @@ async function sendControlCommand(opcode, buttonId) {
     // Re-enable after 500ms minimum (polling will also clear debounce)
     setTimeout(() => {
         debouncedButtons.delete(buttonId);
-        if (btn && CONFIG.mode !== 'mock') {
+        if (btn && CONFIG.mode !== 'mock1') {
             btn.disabled = false;
         }
     }, 500);
@@ -536,16 +559,17 @@ async function sendControlCommand(opcode, buttonId) {
 
 /**
  * Enable or disable all control buttons based on current mode.
- * In mock mode, buttons are disabled and greyed out.
+ * In mock1 mode, buttons are disabled and greyed out.
+ * In mock2 and live mode, buttons are enabled.
  */
 function updateControlButtonsDisabled() {
-    const isMock = CONFIG.mode === 'mock';
+    const isMock1 = CONFIG.mode === 'mock1';
     const buttons = ['btn-power', 'btn-run', 'btn-pause', 'btn-stop', 'btn-buzzer-off', 'btn-estop'];
     buttons.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            btn.disabled = isMock;
-            btn.classList.toggle('mock-disabled', isMock);
+            btn.disabled = isMock1;
+            btn.classList.toggle('mock-disabled', isMock1);
         }
     });
 }
@@ -586,7 +610,7 @@ function onControlClick(opcode) {
  * @param {string} indicatorId - DOM id of the indicator element to blink
  */
 async function onSensorClick(opcode, indicatorId) {
-    if (CONFIG.mode === 'mock') return;
+    if (CONFIG.mode === 'mock1' || CONFIG.mode === 'mock2') return;
 
     const indicator = document.getElementById(indicatorId);
     if (!indicator) return;
@@ -616,8 +640,8 @@ async function onSensorClick(opcode, indicatorId) {
 // ============================================
 
 function startPolling() {
-    if (CONFIG.mode === 'mock') {
-        // Mock mode: cycle through states at mockCycleInterval
+    if (CONFIG.mode === 'mock1') {
+        // Mock 1: cycle through pre-baked states at mockCycleInterval
         mockTimer = setInterval(async () => {
             const state = getMockState();
             if (state) {
@@ -631,6 +655,23 @@ function startPolling() {
         if (firstState) {
             updateCommandLog(firstState);
             renderAll(firstState);
+        }
+    } else if (CONFIG.mode === 'mock2') {
+        // Mock 2: poll Mock2Engine state at mock2PollInterval
+        // Note: command log is updated by Mock2Engine's log callback (setLogCallback),
+        // NOT by updateCommandLog(), because auto-transitions happen faster than polls
+        // and updateCommandLog's dedup would miss intermediate commands.
+        mockTimer = setInterval(() => {
+            const state = Mock2Engine.getState();
+            if (state) {
+                renderAll(state);
+            }
+        }, CONFIG.mock2PollInterval);
+
+        // Render initial state immediately
+        const initState = Mock2Engine.getState();
+        if (initState) {
+            renderAll(initState);
         }
     } else {
         // Live mode: poll API at pollInterval
@@ -665,8 +706,24 @@ function stopPolling() {
 async function init() {
     console.log('Vision System Monitor starting...');
 
-    // Load mock states (available for manual switch to mock mode)
+    // Load mock states for Mock 1 (available for manual switch)
     await loadMockStates();
+
+    // Set up Mock 2 log callback so transitions appear in command log
+    Mock2Engine.setLogCallback((command) => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+        commandLog.unshift({ time: timeStr, command: command });
+        if (commandLog.length > CONFIG.maxLogEntries) {
+            commandLog.pop();
+        }
+    });
 
     // Start in Live mode by default so real API data is shown immediately
     document.getElementById('api-url').classList.add('visible');

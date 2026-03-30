@@ -1,0 +1,1022 @@
+[
+  {
+    "_metadata": {
+      "timestamp": 1700000000.0,
+      "version": "1.0"
+    },
+    "_label": "IDLE",
+    "guide_top": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "guide_bottom": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "reeler_top": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "reeler_bottom": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": false,
+      "enabled": false,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 0
+    },
+    "encoder_bottom": {
+      "initialized": false,
+      "enabled": false,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 0
+    },
+    "lamps": {
+      "red": false,
+      "yellow": false,
+      "green": true,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": false,
+    "solenoid_bottom": false,
+    "stamping_relay": false,
+    "stepper_initialized": false,
+    "reeler_initialized": false,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": null,
+    "last_command_time": null,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": false,
+      "2": false,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000001.0,
+      "version": "1.0"
+    },
+    "_label": "HANDSHAKE",
+    "guide_top": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "guide_bottom": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "reeler_top": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "reeler_bottom": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": false,
+      "enabled": false,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 0
+    },
+    "encoder_bottom": {
+      "initialized": false,
+      "enabled": false,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 0
+    },
+    "lamps": {
+      "red": false,
+      "yellow": false,
+      "green": true,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": false,
+    "solenoid_bottom": false,
+    "stamping_relay": false,
+    "stepper_initialized": false,
+    "reeler_initialized": false,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "QUERY",
+    "last_command_time": 1700000001.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": false,
+      "2": false,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000002.0,
+      "version": "1.0"
+    },
+    "_label": "CONFIGURE",
+    "guide_top": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "guide_bottom": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "reeler_top": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "reeler_bottom": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": false,
+      "green": true,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": false,
+    "solenoid_bottom": false,
+    "stamping_relay": false,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "SMINI",
+    "last_command_time": 1700000002.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": false,
+      "2": false,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000003.0,
+      "version": "1.0"
+    },
+    "_label": "GUIDES OPENING",
+    "guide_top": {
+      "position": "moving",
+      "moving": true,
+      "reached_limit": false
+    },
+    "guide_bottom": {
+      "position": "moving",
+      "moving": true,
+      "reached_limit": false
+    },
+    "reeler_top": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "reeler_bottom": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": true,
+      "green": false,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": true,
+    "solenoid_bottom": true,
+    "stamping_relay": false,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "GOPN1",
+    "last_command_time": 1700000003.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": true,
+      "2": false,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000004.0,
+      "version": "1.0"
+    },
+    "_label": "GUIDES OPEN + REELERS START",
+    "guide_top": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "guide_bottom": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "reeler_top": {
+      "speed": 800,
+      "teeth": 48,
+      "running": true,
+      "position": 120
+    },
+    "reeler_bottom": {
+      "speed": 600,
+      "teeth": 48,
+      "running": true,
+      "position": 90
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 120,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 90,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": true,
+      "green": false,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": true,
+    "solenoid_bottom": true,
+    "stamping_relay": false,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "RSPD1",
+    "last_command_time": 1700000004.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": true,
+      "2": true,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000005.0,
+      "version": "1.0"
+    },
+    "_label": "MATERIAL RUNNING (SAG TRIGGER)",
+    "guide_top": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "guide_bottom": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "reeler_top": {
+      "speed": 800,
+      "teeth": 48,
+      "running": true,
+      "position": 240
+    },
+    "reeler_bottom": {
+      "speed": 600,
+      "teeth": 48,
+      "running": true,
+      "position": 180
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": true
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 240,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 180,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": true,
+      "green": false,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": true,
+    "sag_bottom_lower": false,
+    "solenoid_top": true,
+    "solenoid_bottom": true,
+    "stamping_relay": true,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "RSPD1",
+    "last_command_time": 1700000005.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000006.0,
+      "version": "1.0"
+    },
+    "_label": "CAMERA SEQUENCE",
+    "guide_top": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "guide_bottom": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "reeler_top": {
+      "speed": 800,
+      "teeth": 48,
+      "running": true,
+      "position": 360
+    },
+    "reeler_bottom": {
+      "speed": 600,
+      "teeth": 48,
+      "running": true,
+      "position": 270
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 360,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 270,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": true,
+      "green": false,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": true,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": 1,
+      "timestamp_enabled": true
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": true,
+    "solenoid_bottom": true,
+    "stamping_relay": true,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "LCS01",
+    "last_command_time": 1700000006.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000007.0,
+      "version": "1.0"
+    },
+    "_label": "ALL CAMERAS DONE",
+    "guide_top": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "guide_bottom": {
+      "position": "open",
+      "moving": false,
+      "reached_limit": true
+    },
+    "reeler_top": {
+      "speed": 800,
+      "teeth": 48,
+      "running": true,
+      "position": 480
+    },
+    "reeler_bottom": {
+      "speed": 600,
+      "teeth": 48,
+      "running": true,
+      "position": 360
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 480,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 360,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": true,
+      "green": false,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": true,
+        "2": true,
+        "3": true,
+        "4": true,
+        "5": true,
+        "6": true
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": true
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": true,
+    "solenoid_bottom": true,
+    "stamping_relay": true,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "LCS03",
+    "last_command_time": 1700000007.0,
+    "run_state": "running",
+    "buzzer_override": false,
+    "query_responsive": true,
+    "light_channels": {
+      "1": true,
+      "2": true,
+      "3": true,
+      "4": true,
+      "5": true,
+      "6": true
+    },
+    "button_lamps": {
+      "run": false,
+      "pause": true,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000008.0,
+      "version": "1.0"
+    },
+    "_label": "GUIDES CLOSING",
+    "guide_top": {
+      "position": "moving",
+      "moving": true,
+      "reached_limit": false
+    },
+    "guide_bottom": {
+      "position": "moving",
+      "moving": true,
+      "reached_limit": false
+    },
+    "reeler_top": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 480
+    },
+    "reeler_bottom": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 360
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 480,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 360,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": true,
+      "green": false,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": false,
+    "solenoid_bottom": false,
+    "stamping_relay": false,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "GCLS1",
+    "last_command_time": 1700000008.0,
+    "run_state": "paused",
+    "buzzer_override": true,
+    "query_responsive": true,
+    "light_channels": {
+      "1": false,
+      "2": false,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": true,
+      "pause": false,
+      "stop": true,
+      "buzzer": false
+    }
+  },
+  {
+    "_metadata": {
+      "timestamp": 1700000009.0,
+      "version": "1.0"
+    },
+    "_label": "CYCLE COMPLETE",
+    "guide_top": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "guide_bottom": {
+      "position": "closed",
+      "moving": false,
+      "reached_limit": false
+    },
+    "reeler_top": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "reeler_bottom": {
+      "speed": 0,
+      "teeth": 48,
+      "running": false,
+      "position": 0
+    },
+    "sensor_top": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "sensor_bottom": {
+      "attached": true,
+      "powered": true,
+      "triggered": false
+    },
+    "encoder_top": {
+      "initialized": true,
+      "enabled": true,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "encoder_bottom": {
+      "initialized": true,
+      "enabled": true,
+      "position": 0,
+      "initial_angle": 0,
+      "teeth_count": 48
+    },
+    "lamps": {
+      "red": false,
+      "yellow": false,
+      "green": true,
+      "buzzer": false
+    },
+    "cameras": {
+      "flags": {
+        "1": false,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false,
+        "6": false
+      },
+      "active_sequence": -1,
+      "timestamp_enabled": false
+    },
+    "sag_top_upper": false,
+    "sag_top_lower": false,
+    "sag_bottom_upper": false,
+    "sag_bottom_lower": false,
+    "solenoid_top": false,
+    "solenoid_bottom": false,
+    "stamping_relay": false,
+    "stepper_initialized": true,
+    "reeler_initialized": true,
+    "door_locked": true,
+    "estop_pressed": false,
+    "power_on": true,
+    "last_command": "RESET",
+    "last_command_time": 1700000009.0,
+    "run_state": "stopped",
+    "buzzer_override": false,
+    "query_responsive": false,
+    "light_channels": {
+      "1": false,
+      "2": false,
+      "3": false,
+      "4": false,
+      "5": false,
+      "6": false
+    },
+    "button_lamps": {
+      "run": true,
+      "pause": false,
+      "stop": false,
+      "buzzer": false
+    }
+  }
+]
