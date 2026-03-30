@@ -33,5 +33,5 @@
 
 ## 5. Commit
 
-- [ ] 5.1 `git add start.py tests/test_start.py README.md`
-- [ ] 5.2 Commit: `feat: add unified start.py entry point (emulator + API + visualizer in one command)`
+- [x] 5.1 `git add start.py tests/test_start.py README.md`
+- [x] 5.2 Commit: `feat: add unified start.py entry point (emulator + API + visualizer in one command)`
