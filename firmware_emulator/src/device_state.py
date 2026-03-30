@@ -82,15 +82,37 @@ class LampState:
 
 
 @dataclass
+class ButtonLampState:
+    """Front panel button indicator lamp states (I2C expander 3)"""
+    run: bool = False
+    pause: bool = False
+    stop: bool = False
+    buzzer: bool = False
+
+
+@dataclass
+class ButtonFlagState:
+    """Push button attach/detach polling flags"""
+    run: bool = False        # ATRUN/DTRUN — run_FLAG
+    pause: bool = False      # ATPAU/DTPAU
+    stop: bool = False       # ATSTP/DTSTP
+    buzzeroff: bool = False  # ATBOF/DTBOF
+    doorlock: bool = False   # ATDRL/DTDRL
+
+
+@dataclass
 class CameraState:
     """Light-Camera sequence state"""
     flags: Dict[int, bool] = None  # 7 camera flags (0-6)
     active_sequence: int = -1
     timestamp_enabled: bool = False
+    inspection_flags: Dict[int, bool] = None  # LCSI0-LCSI6 inspection enable
 
     def __post_init__(self):
         if self.flags is None:
             self.flags = {i: False for i in range(7)}
+        if self.inspection_flags is None:
+            self.inspection_flags = {i: False for i in range(7)}
 
 
 class DeviceState:
@@ -113,8 +135,14 @@ class DeviceState:
         self.encoder_top = EncoderState()
         self.encoder_bottom = EncoderState()
 
-        # Lamps
+        # Tower lamps
         self.lamps = LampState()
+
+        # Front panel button indicator lamps
+        self.button_lamps = ButtonLampState()
+
+        # Push button attach/detach flags
+        self.button_flags = ButtonFlagState()
 
         # Cameras
         self.cameras = CameraState()
@@ -128,8 +156,8 @@ class DeviceState:
         # Machine power
         self.power_on = True
 
-        # Sag sensors
-        self.sag_top_upper = False  # False = pass (sensor not triggered)
+        # Sag sensors (False = sensor detecting = PASS, True = not detecting = FAIL)
+        self.sag_top_upper = False
         self.sag_top_lower = False
         self.sag_bottom_upper = False
         self.sag_bottom_lower = False
@@ -141,9 +169,38 @@ class DeviceState:
         # Stamping relay
         self.stamping_relay = False
 
+        # Winding relay
+        self.winding_relay = False
+
+        # Pressure switch
+        self.pressure_switch_enabled = False
+        self.pressure_switch_on = False
+
+        # Trigger sensor power (sensors 1-8, per I2C expander 2)
+        self.sensor_power = {i: False for i in range(1, 9)}
+
         # Initialization flags
         self.stepper_initialized = False
         self.reeler_initialized = False
+
+        # I2C expander initialization (slots 1-3)
+        self.i2c_initialized = {1: False, 2: False, 3: False}
+
+        # Rejection logic
+        self.rejection_enabled = False
+
+        # Reeler speed multiplication factor
+        self.reeler_multiplication_factor = 1
+
+        # Skip trigger count
+        self.skip_trigger_count = 1
+
+        # SPM delays (microseconds)
+        self.spm_delay_top = 0
+        self.spm_delay_bottom = 0
+
+        # MI synchronization flag
+        self.insync = False
 
         # Command tracking
         self.last_command = None
@@ -192,10 +249,13 @@ class DeviceState:
             'encoder_top': asdict(self.encoder_top),
             'encoder_bottom': asdict(self.encoder_bottom),
             'lamps': asdict(self.lamps),
+            'button_lamps': asdict(self.button_lamps),
+            'button_flags': asdict(self.button_flags),
             'cameras': {
                 'flags': self.cameras.flags,
                 'active_sequence': self.cameras.active_sequence,
                 'timestamp_enabled': self.cameras.timestamp_enabled,
+                'inspection_flags': self.cameras.inspection_flags,
             },
             'door_locked': self.door_locked,
             'estop_pressed': self.estop_pressed,
@@ -207,8 +267,19 @@ class DeviceState:
             'solenoid_top': self.solenoid_top,
             'solenoid_bottom': self.solenoid_bottom,
             'stamping_relay': self.stamping_relay,
+            'winding_relay': self.winding_relay,
+            'pressure_switch_enabled': self.pressure_switch_enabled,
+            'pressure_switch_on': self.pressure_switch_on,
+            'sensor_power': dict(self.sensor_power),
             'stepper_initialized': self.stepper_initialized,
             'reeler_initialized': self.reeler_initialized,
+            'i2c_initialized': dict(self.i2c_initialized),
+            'rejection_enabled': self.rejection_enabled,
+            'reeler_multiplication_factor': self.reeler_multiplication_factor,
+            'skip_trigger_count': self.skip_trigger_count,
+            'spm_delay_top': self.spm_delay_top,
+            'spm_delay_bottom': self.spm_delay_bottom,
+            'insync': self.insync,
             'last_command': self.last_command,
             'last_command_time': self.last_command_time,
             'run_state': self.run_state.value,
@@ -242,11 +313,18 @@ class DeviceState:
             f"DeviceState(\n"
             f"  guide_top={self.guide_top.position.value}\n"
             f"  guide_bottom={self.guide_bottom.position.value}\n"
+            f"  reeler_top_running={self.reeler_top.running}\n"
+            f"  reeler_bottom_running={self.reeler_bottom.running}\n"
             f"  sensor_top_attached={self.sensor_top.attached}\n"
             f"  sensor_bottom_attached={self.sensor_bottom.attached}\n"
             f"  encoder_top_enabled={self.encoder_top.enabled}\n"
             f"  encoder_bottom_enabled={self.encoder_bottom.enabled}\n"
             f"  cameras_active={[i for i, v in self.cameras.flags.items() if v]}\n"
             f"  lamps={self.lamps}\n"
+            f"  button_lamps={self.button_lamps}\n"
+            f"  estop={self.estop_pressed} power={self.power_on}\n"
+            f"  door_locked={self.door_locked}\n"
+            f"  stamping={self.stamping_relay} winding={self.winding_relay}\n"
+            f"  solenoid_top={self.solenoid_top}\n"
             f")"
         )

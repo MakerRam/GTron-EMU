@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+import time
 from pathlib import Path
 from firmware_emulator.src.serial_bridge import SerialBridge
 from firmware_emulator.src.command_parser import CommandParser
@@ -33,7 +34,17 @@ class EmulatorEngine:
             logger.error(f"Failed to initialize serial bridge: {e}")
             raise
         
-        self.opcode_handler = OpcodeHandler(logger)
+        self.opcode_handler = OpcodeHandler(logger, delays={
+            # Configurable simulated delays (seconds) for mechanical operations
+            "TPGOP": 0.5,   # Top guide open
+            "TPGCL": 0.5,   # Top guide close
+            "BMGOP": 0.5,   # Bottom guide open
+            "BMGCL": 0.5,   # Bottom guide close
+            "RFS01": 0.3,   # Top reference search
+            "RFS02": 0.3,   # Bottom reference search
+            "TPRTR": 0.2,   # Top reeler rotate (diagnostic)
+            "BMRTR": 0.2,   # Bottom reeler rotate (diagnostic)
+        })
         self.device_state = DeviceState()
         self.running = False
         
@@ -51,14 +62,18 @@ class EmulatorEngine:
         
         logger.info(f"Emulator engine initialized on {port}")
     
-    def _process_command(self, cmd_bytes: bytes) -> bytes:
-        """Process received command."""
+    def _process_command(self, cmd_bytes: bytes) -> list:
+        """
+        Process received command.
+
+        Returns a list of 5-byte response frames (may be empty, single, or multi).
+        """
         print(f"[DBG-SERIAL] _process_command: raw={cmd_bytes!r}", flush=True)
         if not CommandParser.is_valid_command(cmd_bytes):
             logger.warning(f"Invalid command format: {cmd_bytes}")
             print(f"[DBG-SERIAL] rejected invalid command", flush=True)
-            return b'FLS'
-        
+            return [b'FLS  ']
+
         opcode = CommandParser.parse(cmd_bytes)
         print(f"[DBG-SERIAL] opcode={opcode!r}", flush=True)
 
@@ -69,23 +84,34 @@ class EmulatorEngine:
             self.device_state.log_command(opcode)
 
             # Sync exporter's state reference to the new state object
-            # (dispatch returns a new DeviceState instance; exporter must follow it)
             if self.state_exporter is not None:
                 self.state_exporter._state = self.device_state
                 print(f"[DBG-SERIAL] exporter synced: last_command={self.state_exporter._state.last_command!r}", flush=True)
 
-            # Convert response string to bytes, pad to 5 bytes
-            response_bytes = response.encode('ascii') if response else b''
-            response_bytes = response_bytes.ljust(5, b' ')[:5]  # Pad or truncate to 5 bytes
-            return response_bytes
-        except KeyError:
-            logger.error(f"Unknown opcode: {opcode}")
-            print(f"[DBG-SERIAL] UNKNOWN opcode: {opcode!r}", flush=True)
-            return b'FLS'
+            # Apply configurable delay for mechanical operations
+            delay = self.opcode_handler.get_delay(opcode)
+            if delay > 0:
+                time.sleep(delay)
+
+            # Normalize response to a list of strings
+            if isinstance(response, list):
+                resp_strings = response
+            elif response:
+                resp_strings = [response]
+            else:
+                resp_strings = []
+
+            # Convert each response string to a 5-byte padded frame
+            frames = []
+            for r in resp_strings:
+                frame = r.encode('ascii').ljust(5, b' ')[:5]
+                frames.append(frame)
+            return frames
+
         except Exception as e:
             logger.error(f"Error processing opcode {opcode}: {e}")
             print(f"[DBG-SERIAL] EXCEPTION: {e}", flush=True)
-            return b'FLS'
+            return [b'FLS  ']
     
     def _log_transaction(self, cmd_bytes: bytes, response: bytes):
         """Log command/response transaction."""
@@ -127,12 +153,13 @@ class EmulatorEngine:
                 cmd_bytes = self.serial_bridge.read_command()
                 
                 if cmd_bytes is not None:
-                    response = self._process_command(cmd_bytes)
+                    response_frames = self._process_command(cmd_bytes)
                     
-                    if self.serial_bridge.write_response(response):
-                        self._log_transaction(cmd_bytes, response)
-                    else:
-                        logger.error("Failed to send response")
+                    for frame in response_frames:
+                        if self.serial_bridge.write_response(frame):
+                            self._log_transaction(cmd_bytes, frame)
+                        else:
+                            logger.error("Failed to send response")
         
         except KeyboardInterrupt:
             logger.info("Shutdown signal received (Ctrl+C)")

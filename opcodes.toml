@@ -1,0 +1,1112 @@
+# ============================================================================
+# TIME MACHINE V4.2 — COMPLETE OPCODE REFERENCE
+# ============================================================================
+# PROJECT  : TIME MACHINE 4.2.0 (GTRON 2-Rack System)
+# AUTHOR   : SANTHOSH SEKAR / REVISED BY RAMKUMAR
+# PROTOCOL : 5-char ASCII strings over SerialUSB @ 115200 baud
+# USAGE    : Python program opcode lookup — all commands & responses
+# ============================================================================
+
+
+# ============================================================================
+# SEGMENT 1: COMMUNICATION / SYSTEM
+# ============================================================================
+# Health check and synchronization between PC and controller
+
+[system]
+
+    [system.PING]
+    opcode = "QUERY"                  # Connection health check from PC to controller
+    direction = "command"
+
+    [system.PING_RESPONSE]
+    opcode = "YES"                    # Response sent back when PING received
+    direction = "response"
+
+    [system.MI_RESPONSE]
+    opcode = "MIRSP"                  # Synchronous feedback from Machine Interface; sets insync=true
+    direction = "response"
+
+    [system.INCORRECTOPCODE]
+    opcode = "FLS"                    # Sent when an incorrect/unrecognized opcode is received
+    direction = "response"
+
+    [system.TRIGGER_SIGNAL]
+    opcode = "D"                      # Trigger signal identifier (used in ISR context)
+    direction = "internal"
+
+    [system.TIMESTAMP_ENABLE]
+    opcode = "TSENB"                  # Enable timestamp output during inspection (TSFlag = true)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 2: EMERGENCY STOP / MACHINE POWER
+# ============================================================================
+# E-Stop button and machine power status monitoring
+
+[emergency_stop]
+
+    [emergency_stop.EMERGENCY_STOP_CHECK]
+    opcode = "EMSTP"                  # Check whether E-Stop is pressed (machine power status)
+    direction = "command"
+
+    [emergency_stop.MACHINE_POWER_ON]
+    opcode = "MP1"                    # Response: machine power is ON (E-Stop not pressed)
+    direction = "response"
+
+    [emergency_stop.MACHINE_POWER_OFF]
+    opcode = "MP0"                    # Response: machine power is OFF (E-Stop pressed)
+    direction = "response"
+
+    [emergency_stop.EMERGENCY_STOP_PRESSED]
+    opcode = "ES1"                    # Sent when E-Stop is physically pressed
+    direction = "response"
+
+    [emergency_stop.EMERGENCY_STOP_NOTPRESSED]
+    opcode = "ES0"                    # Sent when E-Stop is released
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 3: PUSH BUTTON ATTACH / DETACH
+# ============================================================================
+# Enable/disable polling of front panel hardware buttons
+
+[push_button_control]
+
+    [push_button_control.ATTACH_RUN]
+    opcode = "ATRUN"                  # Enable polling of RUN button (run_FLAG = HIGH)
+    direction = "command"
+
+    [push_button_control.DETACH_RUN]
+    opcode = "DTRUN"                  # Disable polling of RUN button (run_FLAG = LOW)
+    direction = "command"
+
+    [push_button_control.ATTACH_PAUSE]
+    opcode = "ATPAU"                  # Enable polling of PAUSE button
+    direction = "command"
+
+    [push_button_control.DETACH_PAUSE]
+    opcode = "DTPAU"                  # Disable polling of PAUSE button
+    direction = "command"
+
+    [push_button_control.ATTACH_STOP]
+    opcode = "ATSTP"                  # Enable polling of STOP button
+    direction = "command"
+
+    [push_button_control.DETACH_STOP]
+    opcode = "DTSTP"                  # Disable polling of STOP button
+    direction = "command"
+
+    [push_button_control.ATTACH_BUZZEROFF]
+    opcode = "ATBOF"                  # Enable polling of BUZZER OFF button
+    direction = "command"
+
+    [push_button_control.DETACH_BUZZEROFF]
+    opcode = "DTBOF"                  # Disable polling of BUZZER OFF button
+    direction = "command"
+
+    [push_button_control.ATTACH_DOORLOCK]
+    opcode = "ATDRL"                  # Enable polling of door lock switch (doorlock_FLAG = HIGH)
+    direction = "command"
+
+    [push_button_control.DETACH_DOORLOCK]
+    opcode = "DTDRL"                  # Disable polling of door lock switch
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 4: PUSH BUTTON PRESS RESPONSES
+# ============================================================================
+# Sent by controller to MI when physical buttons are pressed
+
+[push_button_responses]
+
+    [push_button_responses.RUN_PRESS]
+    opcode = "RUN"                    # Sent when RUN button physically pressed
+    direction = "response"
+
+    [push_button_responses.PAUSE_PRESS]
+    opcode = "PAU"                    # Sent when PAUSE button physically pressed
+    direction = "response"
+
+    [push_button_responses.STOP_PRESS]
+    opcode = "STP"                    # Sent when STOP button physically pressed
+    direction = "response"
+
+    [push_button_responses.BUZZEROFF_PRESS]
+    opcode = "BOF"                    # Sent when BUZZER OFF button physically pressed
+    direction = "response"
+
+    [push_button_responses.DOORUNLOCK_PRESS]
+    opcode = "DUL"                    # Sent when door is unlocked (door lock switch detected)
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 5: PUSH BUTTON INDICATOR LAMPS
+# ============================================================================
+# Control front panel indicator lamps via I2C expander 3
+
+[indicator_lamps]
+
+    [indicator_lamps.RUN_LAMP_ON]
+    opcode = "RUNON"                  # Turn ON RUN indicator lamp (I2C3 pin 1 HIGH)
+    direction = "command"
+
+    [indicator_lamps.RUN_LAMP_OFF]
+    opcode = "RUNOF"                  # Turn OFF RUN indicator lamp (I2C3 pin 1 LOW)
+    direction = "command"
+
+    [indicator_lamps.PAUSE_LAMP_ON]
+    opcode = "PAUON"                  # Turn ON PAUSE indicator lamp (I2C3 pin 0 HIGH)
+    direction = "command"
+
+    [indicator_lamps.PAUSE_LAMP_OFF]
+    opcode = "PAUOF"                  # Turn OFF PAUSE indicator lamp (I2C3 pin 0 LOW)
+    direction = "command"
+
+    [indicator_lamps.STOP_LAMP_ON]
+    opcode = "STPON"                  # Turn ON STOP indicator lamp (I2C3 pin 7 HIGH)
+    direction = "command"
+
+    [indicator_lamps.STOP_LAMP_OFF]
+    opcode = "STPOF"                  # Turn OFF STOP indicator lamp (I2C3 pin 7 LOW)
+    direction = "command"
+
+    [indicator_lamps.BUZZER_LAMP_ON]
+    opcode = "BZRON"                  # Turn ON BUZZER OFF indicator lamp (I2C3 pin 6 HIGH)
+    direction = "command"
+
+    [indicator_lamps.BUZZER_LAMP_OFF]
+    opcode = "BZROF"                  # Turn OFF BUZZER OFF indicator lamp (I2C3 pin 6 LOW)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 6: TOWER LAMP
+# ============================================================================
+# Red/Yellow/Green tower lamps and tower buzzer control
+
+[tower_lamp]
+
+    [tower_lamp.TOWERLAMP_RED_ON]
+    opcode = "TRED1"                  # Turn ON red tower lamp (I2C3 pin 3 HIGH)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_RED_OFF]
+    opcode = "TRED0"                  # Turn OFF red tower lamp (I2C3 pin 3 LOW)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_YELLOW_ON]
+    opcode = "TYEL1"                  # Turn ON yellow tower lamp (GPIO pin 50 HIGH)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_YELLOW_OFF]
+    opcode = "TYEL0"                  # Turn OFF yellow tower lamp (GPIO pin 50 LOW)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_GREEN_ON]
+    opcode = "TGRN1"                  # Turn ON green tower lamp (GPIO pin 51 HIGH)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_GREEN_OFF]
+    opcode = "TGRN0"                  # Turn OFF green tower lamp (GPIO pin 51 LOW)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_BUZZER_ON]
+    opcode = "TBZR1"                  # Turn ON tower buzzer (I2C3 pin 2 HIGH)
+    direction = "command"
+
+    [tower_lamp.TOWERLAMP_BUZZER_OFF]
+    opcode = "TBZR0"                  # Turn OFF tower buzzer (I2C3 pin 2 LOW)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 7: STAMPING, WINDING & SOLENOID
+# ============================================================================
+# Relay and solenoid valve control for stamping/winding operations
+
+[stamping_winding_solenoid]
+
+    [stamping_winding_solenoid.STAMPING_RELAY_ON]
+    opcode = "STMP1"                  # Turn ON stamping relay (GPIO pin 11 HIGH)
+    direction = "command"
+
+    [stamping_winding_solenoid.STAMPING_RELAY_OFF]
+    opcode = "STMP0"                  # Turn OFF stamping relay (GPIO pin 11 LOW)
+    direction = "command"
+
+    [stamping_winding_solenoid.WINDING_RELAY_ON]
+    opcode = "WIND1"                  # Turn ON winding relay (same STAMPING_RELAY pin HIGH)
+    direction = "command"
+
+    [stamping_winding_solenoid.WINDING_RELAY_OFF]
+    opcode = "WIND0"                  # Turn OFF winding relay (same STAMPING_RELAY pin LOW)
+    direction = "command"
+
+    [stamping_winding_solenoid.SOLENOID_ON]
+    opcode = "SOLON"                  # Turn ON solenoid valve (TOP_SOLENOID_VALVE pin LOW — active low)
+    direction = "command"
+
+    [stamping_winding_solenoid.SOLENOID_OFF]
+    opcode = "SOLOF"                  # Turn OFF solenoid valve (TOP_SOLENOID_VALVE pin HIGH)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 8: DOOR LOCK / PRESSURE SWITCH
+# ============================================================================
+# Door limit switch checking and pressure switch monitoring
+
+[door_pressure]
+
+    [door_pressure.DOOR_LOCK_CHECK]
+    opcode = "DOORC"                  # Check door lock limit switches (I2C1 pins 1 & 2)
+    direction = "command"
+
+    [door_pressure.DOOR_LIMIT_SWITCH_PRESSED]
+    opcode = "DL1"                    # Response: both door limit switches pressed (doors closed)
+    direction = "response"
+
+    [door_pressure.DOOR_LIMIT_SWITCH_NOTPRESSED]
+    opcode = "DL0"                    # Response: one or both door limit switches not pressed
+    direction = "response"
+
+    [door_pressure.PRESSURESWITCH_ENABLE]
+    opcode = "PSWEN"                  # Enable pressure switch polling (PressureSwitch_FLAG = HIGH)
+    direction = "command"
+
+    [door_pressure.PRESSURESWITCH_DISABLE]
+    opcode = "PSWDB"                  # Disable pressure switch polling
+    direction = "command"
+
+    [door_pressure.PRESSURESWITCH_CHECK]
+    opcode = "PSWCK"                  # One-shot check of pressure switch state (I2C1 pin 4)
+    direction = "command"
+
+    [door_pressure.PRESSURESWITCH_ON]
+    opcode = "PSWON"                  # Response: pressure switch is ON
+    direction = "response"
+
+    [door_pressure.PRESSURESWITCH_OFF]
+    opcode = "PSWOF"                  # Response: pressure switch is OFF
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 9: SAG SENSOR
+# ============================================================================
+# Top and bottom rack sag sensor checks for reel tension monitoring
+
+[sag_sensor]
+
+    [sag_sensor.TOP_SAG_SENSOR_CHECK]
+    opcode = "TPSAG"                  # Check top rack upper and lower sag sensors
+    direction = "command"
+
+    [sag_sensor.BOTTOM_SAG_SENSOR_CHECK]
+    opcode = "BMSAG"                  # Check bottom rack upper and lower sag sensors
+    direction = "command"
+
+    [sag_sensor.TOP_U_SAG_SENSOR_PASS]
+    opcode = "TU1"                    # Response: top upper sag sensor detecting (LOW)
+    direction = "response"
+
+    [sag_sensor.TOP_U_SAG_SENSOR_FAIL]
+    opcode = "TU0"                    # Response: top upper sag sensor not detecting (HIGH)
+    direction = "response"
+
+    [sag_sensor.TOP_L_SAG_SENSOR_PASS]
+    opcode = "TL1"                    # Response: top lower sag sensor detecting
+    direction = "response"
+
+    [sag_sensor.TOP_L_SAG_SENSOR_FAIL]
+    opcode = "TL0"                    # Response: top lower sag sensor not detecting
+    direction = "response"
+
+    [sag_sensor.BOTTOM_U_SAG_SENSOR_PASS]
+    opcode = "BU1"                    # Response: bottom upper sag sensor detecting
+    direction = "response"
+
+    [sag_sensor.BOTTOM_U_SAG_SENSOR_FAIL]
+    opcode = "BU0"                    # Response: bottom upper sag sensor not detecting
+    direction = "response"
+
+    [sag_sensor.BOTTOM_L_SAG_SENSOR_PASS]
+    opcode = "BL1"                    # Response: bottom lower sag sensor detecting
+    direction = "response"
+
+    [sag_sensor.BOTTOM_L_SAG_SENSOR_FAIL]
+    opcode = "BL0"                    # Response: bottom lower sag sensor not detecting
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 10: GUIDE MOTOR
+# ============================================================================
+# Top and bottom guide open/close/insert via TMC5160 stepper motor
+
+[guide]
+
+    [guide.TOP_GUIDE_OPEN]
+    opcode = "tpGOP"                  # Open top guide until open limit switch is hit (StepperRotateCW)
+    direction = "command"
+
+    [guide.TOP_GUIDE_CLOSE]
+    opcode = "tpGCL"                  # Close top guide until close limit switch is hit (StepperRotateCCW)
+    direction = "command"
+
+    [guide.TOP_GUIDE_OPEN_RESPONSE]
+    opcode = "tpGOR"                  # Response: top guide open complete
+    direction = "response"
+
+    [guide.TOP_GUIDE_CLOSE_RESPONSE]
+    opcode = "tpGCR"                  # Response: top guide close complete
+    direction = "response"
+
+    [guide.BTM_GUIDE_OPEN]
+    opcode = "bmGOP"                  # Open bottom guide until open limit switch is hit
+    direction = "command"
+
+    [guide.BTM_GUIDE_CLOSE]
+    opcode = "bmGCL"                  # Close bottom guide until close limit switch is hit
+    direction = "command"
+
+    [guide.BTM_GUIDE_OPEN_RESPONSE]
+    opcode = "bmGOR"                  # Response: bottom guide open complete
+    direction = "response"
+
+    [guide.BTM_GUIDE_CLOSE_RESPONSE]
+    opcode = "bmGCR"                  # Response: bottom guide close complete
+    direction = "response"
+
+    [guide.TOP_GUIDE_INSERT]
+    opcode = "tpGDI"                  # Move top guide to specified steps (reads step count from serial)
+    direction = "command"
+
+    [guide.BTM_GUIDE_INSERT]
+    opcode = "bmGDI"                  # Move bottom guide to specified steps (reads step count from serial)
+    direction = "command"
+
+    [guide.GUIDE_REACHED]
+    opcode = "GRD"                    # Response: guide has reached target position
+    direction = "response"
+
+    [guide.TOP_GUIDE_TEST]
+    opcode = "tpGTS"                  # Long-run test: opens then closes top guide in sequence
+    direction = "command"
+
+    [guide.BOTTOM_GUIDE_TEST]
+    opcode = "bmGTS"                  # Long-run test: opens then closes bottom guide in sequence
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 11: LIMIT SWITCH CHECK
+# ============================================================================
+# Check open limit switch state before guide motor diagnostics
+
+[limit_switch]
+
+    [limit_switch.TOP_LIMIT_SWITCH_CHECK]
+    opcode = "tpLSC"                  # Check top rack open limit switch state
+    direction = "command"
+
+    [limit_switch.TOP_LIMIT_SWITCH_PRESSED]
+    opcode = "tpOL1"                  # Response: top open limit switch pressed (HIGH)
+    direction = "response"
+
+    [limit_switch.TOP_LIMIT_SWITCH_NOTPRESSED]
+    opcode = "tpOL0"                  # Response: top open limit switch not pressed (LOW)
+    direction = "response"
+
+    [limit_switch.BTM_LIMIT_SWITCH_CHECK]
+    opcode = "bmLSC"                  # Check bottom rack open limit switch state
+    direction = "command"
+
+    [limit_switch.BTM_LIMIT_SWITCH_PRESSED]
+    opcode = "bmOL1"                  # Response: bottom open limit switch pressed
+    direction = "response"
+
+    [limit_switch.BTM_LIMIT_SWITCH_NOTPRESSED]
+    opcode = "bmOL0"                  # Response: bottom open limit switch not pressed
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 12: STEPPER / REELER MOTOR INITIALIZATION
+# ============================================================================
+# Initialize TMC5160 stepper and reeler motor drivers via SPI
+
+[motor_init]
+
+    [motor_init.STEPPER_INITIALIZATION]
+    opcode = "SMINI"                  # Initialize both top & bottom stepper drivers (TMC5160 SPI register config)
+    direction = "command"
+
+    [motor_init.REELER_INITIALIZATION]
+    opcode = "RMINI"                  # Initialize both top & bottom reeler motors (sets GCONF)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 13: REELER MOTOR CONTROL
+# ============================================================================
+# Start/stop reeler motors, set speed, and diagnostic rotation
+
+[reeler]
+
+    [reeler.TOP_START_REELER]
+    opcode = "tpSTR"                  # Start top reeler motor (rMotor1=HIGH, resets D_Trig_Count); sag logic controls actual start/stop
+    direction = "command"
+
+    [reeler.TOP_STOP_REELER]
+    opcode = "tpSTP"                  # Stop top reeler motor (rMotor1=LOW, calls StopReelerMotor1)
+    direction = "command"
+
+    [reeler.BTM_START_REELER]
+    opcode = "bmSTR"                  # Start bottom reeler motor (rMotor2=HIGH)
+    direction = "command"
+
+    [reeler.BTM_STOP_REELER]
+    opcode = "bmSTP"                  # Stop bottom reeler motor (rMotor2=LOW, calls StopReelerMotor2)
+    direction = "command"
+
+    [reeler.TOP_REELER_SPEED]
+    opcode = "tpRSP"                  # Set top reeler speed (reads RPM from serial, converts: RPM * 51200 / 60)
+    direction = "command"
+
+    [reeler.BTM_REELER_SPEED]
+    opcode = "bmRSP"                  # Set bottom reeler speed (reads RPM from serial, same conversion)
+    direction = "command"
+
+    [reeler.TOP_ROTATE_REELER]
+    opcode = "tpRTR"                  # Rotate top reeler motor (diagnostic mode — runs ReelerSteps then stops)
+    direction = "command"
+
+    [reeler.BTM_ROTATE_REELER]
+    opcode = "bmRTR"                  # Rotate bottom reeler motor (diagnostic mode)
+    direction = "command"
+
+    [reeler.REELER_MULTIPLICATION_FACTOR]
+    opcode = "RMSMF"                  # Set reeler motor speed multiplication factor (reads value into Multiplicationfactor)
+    direction = "command"
+
+    [reeler.Reeler_int_done]
+    opcode = "RHD"                    # Response: reeler operation complete (sent after RotateReelerMotor / ISR functions)
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 14: ENCODER
+# ============================================================================
+# LS7366 encoder initialization, angle setup, and trigger enable/disable
+
+[encoder]
+
+    [encoder.ENCODER_INITIALIZATION_TOP]
+    opcode = "tpENI"                  # Initialize top encoder (LS7366: clear regs, set MDR0/MDR1, attach interrupt, Z-pulse search)
+    direction = "command"
+
+    [encoder.ENCODER_INITIALIZATION_BOTTOM]
+    opcode = "bmENI"                  # Initialize bottom encoder (same as above for bottom rack)
+    direction = "command"
+
+    [encoder.ENCODER_INITIAL_ANGLE_TOP]
+    opcode = "tpINA"                  # Set top encoder initial angle (reads angle, calculates trigger array from teeth count & skip factor)
+    direction = "command"
+
+    [encoder.ENCODER_INITIAL_ANGLE_BOTTOM]
+    opcode = "bmINA"                  # Set bottom encoder initial angle (same logic for bottom rack)
+    direction = "command"
+
+    [encoder.ENCODER_ENABLE_TOP]
+    opcode = "tpEEN"                  # Enable top encoder trigger interrupt (attach FALLING on TOP_ENCODER_INT)
+    direction = "command"
+
+    [encoder.ENCODER_DISABLE_TOP]
+    opcode = "tpEDB"                  # Disable top encoder trigger interrupt (detach interrupt)
+    direction = "command"
+
+    [encoder.ENCODER_ENABLE_BOTTOM]
+    opcode = "bmEEN"                  # Enable bottom encoder trigger interrupt
+    direction = "command"
+
+    [encoder.ENCODER_DISABLE_BOTTOM]
+    opcode = "bmEDB"                  # Disable bottom encoder trigger interrupt
+    direction = "command"
+
+    [encoder.TOP_REELER_TEETH]
+    opcode = "tpRTH"                  # Set top reeler teeth count (reads number of teeth into NoOfTeeth)
+    direction = "command"
+
+    [encoder.BTM_REELER_TEETH]
+    opcode = "bmRTH"                  # Set bottom reeler teeth count
+    direction = "command"
+
+    [encoder.SKIP_TRIGGER_COUNT]
+    opcode = "SKTRG"                  # Set skip trigger count (1=every terminal, 2=every 2nd, etc.)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 15: TRIGGER SENSOR POWER
+# ============================================================================
+# Power ON/OFF trigger sensors via I2C expander 2 (pins 0-7)
+
+[trigger_sensor_power]
+
+    # --- Top Rack Sensors (I2C2 pins 3,2,1,0) ---
+
+    [trigger_sensor_power.POWERON_SENSOR_1]
+    opcode = "POS01"                  # Power ON trigger sensor 1 (I2C2 pin 3 HIGH) — Top rack
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_1]
+    opcode = "PFS01"                  # Power OFF trigger sensor 1 (I2C2 pin 3 LOW)
+    direction = "command"
+
+    [trigger_sensor_power.POWERON_SENSOR_2]
+    opcode = "POS02"                  # Power ON trigger sensor 2 (I2C2 pin 2 HIGH)
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_2]
+    opcode = "PFS02"                  # Power OFF trigger sensor 2 (I2C2 pin 2 LOW)
+    direction = "command"
+
+    [trigger_sensor_power.POWERON_SENSOR_3]
+    opcode = "POS03"                  # Power ON trigger sensor 3 (I2C2 pin 1 HIGH)
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_3]
+    opcode = "PFS03"                  # Power OFF trigger sensor 3 (I2C2 pin 1 LOW)
+    direction = "command"
+
+    [trigger_sensor_power.POWERON_SENSOR_4]
+    opcode = "POS04"                  # Power ON trigger sensor 4 (I2C2 pin 0 HIGH)
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_4]
+    opcode = "PFS04"                  # Power OFF trigger sensor 4 (I2C2 pin 0 LOW)
+    direction = "command"
+
+    # --- Bottom Rack Sensors (I2C2 pins 7,6,5,4) ---
+
+    [trigger_sensor_power.POWERON_SENSOR_5]
+    opcode = "POS05"                  # Power ON trigger sensor 5 (I2C2 pin 7 HIGH) — Bottom rack
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_5]
+    opcode = "PFS05"                  # Power OFF trigger sensor 5 (I2C2 pin 7 LOW)
+    direction = "command"
+
+    [trigger_sensor_power.POWERON_SENSOR_6]
+    opcode = "POS06"                  # Power ON trigger sensor 6 (I2C2 pin 6 HIGH)
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_6]
+    opcode = "PFS06"                  # Power OFF trigger sensor 6 (I2C2 pin 6 LOW)
+    direction = "command"
+
+    [trigger_sensor_power.POWERON_SENSOR_7]
+    opcode = "POS07"                  # Power ON trigger sensor 7 (I2C2 pin 5 HIGH)
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_7]
+    opcode = "PFS07"                  # Power OFF trigger sensor 7 (I2C2 pin 5 LOW)
+    direction = "command"
+
+    [trigger_sensor_power.POWERON_SENSOR_8]
+    opcode = "POS08"                  # Power ON trigger sensor 8 (I2C2 pin 4 HIGH)
+    direction = "command"
+
+    [trigger_sensor_power.POWEROFF_SENSOR_8]
+    opcode = "PFS08"                  # Power OFF trigger sensor 8 (I2C2 pin 4 LOW)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 16: TRIGGER SENSOR ATTACH / DETACH & CHECK
+# ============================================================================
+# Attach/detach interrupts on trigger sensor inputs and check sensor state
+
+[trigger_sensor_control]
+
+    [trigger_sensor_control.ATTACH_SENSOR_TOP]
+    opcode = "tpATS"                  # Attach interrupt on TOP_SENSOR_TRIGGER_INPUT (RISING, calls SetLCtp ISR)
+    direction = "command"
+
+    [trigger_sensor_control.DETACH_SENSOR_TOP]
+    opcode = "tpDTS"                  # Detach interrupt on TOP_SENSOR_TRIGGER_INPUT
+    direction = "command"
+
+    [trigger_sensor_control.ATTACH_SENSOR_BTM]
+    opcode = "bmATS"                  # Attach interrupt on BOTTOM_SENSOR_TRIGGER_INPUT (RISING, calls SetLCbm ISR)
+    direction = "command"
+
+    [trigger_sensor_control.DETACH_SENSOR_BTM]
+    opcode = "bmDTS"                  # Detach interrupt on BOTTOM_SENSOR_TRIGGER_INPUT
+    direction = "command"
+
+    [trigger_sensor_control.TOP_SENSOR_CHECK]
+    opcode = "TPSCK"                  # Check top trigger sensor state (returns TS1 or TS0)
+    direction = "command"
+
+    [trigger_sensor_control.TOP_SENSOR_ON]
+    opcode = "TS1"                    # Response: top trigger sensor is ON (LOW)
+    direction = "response"
+
+    [trigger_sensor_control.TOP_SENSOR_OFF]
+    opcode = "TS0"                    # Response: top trigger sensor is OFF (HIGH)
+    direction = "response"
+
+    [trigger_sensor_control.BOTTOM_SENSOR_CHECK]
+    opcode = "BPSCK"                  # Check bottom trigger sensor state (returns BS1 or BS0)
+    direction = "command"
+
+    [trigger_sensor_control.BOTTOM_SENSOR_ON]
+    opcode = "BS1"                    # Response: bottom trigger sensor is ON
+    direction = "response"
+
+    [trigger_sensor_control.BOTTOM_SENSOR_OFF]
+    opcode = "BS0"                    # Response: bottom trigger sensor is OFF
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 17: LIGHT / CAMERA SEQUENCES (Individual Diagnostics)
+# ============================================================================
+# Individual and combined light-camera trigger sequences for diagnostics
+
+[light_camera_sequence]
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_1]
+    opcode = "LCS01"                  # Rack 1 Top Cam: Light1 ON -> Cam1 trigger -> Light1 OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_2]
+    opcode = "LCS02"                  # Rack 1 Side Cam: Light2 ON -> Cam2 trigger -> Light2 OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_3]
+    opcode = "LCS03"                  # Rack 1 Front Cam: Light3 ON -> Cam3 trigger -> Light3 OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_4]
+    opcode = "LCS04"                  # Rack 1 Top Light Cam: Solenoid ON -> Cam1 trigger -> Solenoid OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_5]
+    opcode = "LCS05"                  # Rack 2 Top Cam: Light4 ON -> Cam4 trigger -> Light4 OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_6]
+    opcode = "LCS06"                  # Rack 2 Side Cam: Light5 ON -> Cam5 trigger -> Light5 OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_7]
+    opcode = "LCS07"                  # Rack 2 Front Cam: Light6 ON -> Cam6 trigger -> Light6 OFF
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_TOP]
+    opcode = "LCStp"                  # Full top rack sequence: all enabled cameras via Timer1 interrupts
+    direction = "command"
+
+    [light_camera_sequence.LIGHT_CAMERA_SEQUENCE_BTM]
+    opcode = "LCSbm"                  # Full bottom rack sequence: all enabled cameras via Timer2 interrupts
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 18: LIGHT / CAMERA SEQUENCE FLAGS (Inspection Enable)
+# ============================================================================
+# Enable individual camera flags for inspection mode
+
+[light_camera_flags]
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I0]
+    opcode = "LCSI0"                  # Enable Rack 1 Top Cam flag (LightCameraSequenceFlag_0 = true)
+    direction = "command"
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I1]
+    opcode = "LCSI1"                  # Enable Rack 1 Side Cam flag
+    direction = "command"
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I2]
+    opcode = "LCSI2"                  # Enable Rack 1 Front Cam flag
+    direction = "command"
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I3]
+    opcode = "LCSI3"                  # Enable Rack 1 Top Light Cam flag (backlight via solenoid)
+    direction = "command"
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I4]
+    opcode = "LCSI4"                  # Enable Rack 2 Top Cam flag
+    direction = "command"
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I5]
+    opcode = "LCSI5"                  # Enable Rack 2 Side Cam flag
+    direction = "command"
+
+    [light_camera_flags.LIGHT_CAMERA_SEQUENCE_I6]
+    opcode = "LCSI6"                  # Enable Rack 2 Front Cam flag
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 19: LIGHT / CAMERA TIMING CONFIG (Currently commented out in firmware)
+# ============================================================================
+# Configurable light/camera ON-OFF timing — defined but handler is commented out
+
+[light_camera_timing]
+
+    [light_camera_timing.LIGHT_ON_DELAY_TIMING]
+    opcode = "LONDT"                  # Set standard light ON delay (microseconds from serial) [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.CAMERA_ON_DELAY_TIMING]
+    opcode = "CONDT"                  # Set standard camera ON delay [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.CAMERA_OFF_DELAY_TIMING]
+    opcode = "COFDT"                  # Set standard camera OFF delay [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.LIGHT_OFF_DELAY_TIMING]
+    opcode = "LOFDT"                  # Set standard light OFF delay [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.TOP_LIGHT_ON_DELAY_TIMING]
+    opcode = "TLOND"                  # Set top-light-specific ON delay [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.TOP_CAMERA_ON_DELAY_TIMING]
+    opcode = "TCOND"                  # Set top-light-specific camera ON delay [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.TOP_CAMERA_OFF_DELAY_TIMING]
+    opcode = "TCOFD"                  # Set top-light-specific camera OFF delay [COMMENTED OUT]
+    direction = "command"
+
+    [light_camera_timing.TOP_LIGHT_OFF_DELAY_TIMING]
+    opcode = "TLOFD"                  # Set top-light-specific light OFF delay [COMMENTED OUT]
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 20: IET (INSPECTION EVENT TRANSITIONS)
+# ============================================================================
+# State machine transitions for inspection workflow (select, run, pause, fail, etc.)
+
+[iet]
+
+    [iet.IET_SELECT_PRESS]
+    opcode = "IESEL"                  # Select state: enables RUN, disables others, resets trig counts, turns on RUN lamp
+    direction = "command"
+
+    [iet.IET_RUN_PRESS]
+    opcode = "IERUN"                  # Run state: enables PAUSE+STOP, green tower lamp ON, enables solenoid
+    direction = "command"
+
+    [iet.IET_PASS_PRESS]
+    opcode = "IEPAS"                  # Pass state: same as Run (enables PAUSE+STOP, green lamp)
+    direction = "command"
+
+    [iet.IET_PAUSE_PRESS]
+    opcode = "IEPAU"                  # Pause state: enables RUN+STOP, yellow tower lamp ON, stamping relay + solenoid close
+    direction = "command"
+
+    [iet.IET_FAIL_PRESS]
+    opcode = "IEFAI"                  # Fail state: enables BUZZEROFF only, red tower lamp + buzzer ON, stamping + solenoid close
+    direction = "command"
+
+    [iet.IET_BUZZEROFFDR_PRESS]
+    opcode = "BOFDR"                  # Buzzer off (during run): disables RUN, enables STOP, turns off buzzer
+    direction = "command"
+
+    [iet.IET_BUZZEROFFER_PRESS]
+    opcode = "BOFER"                  # Buzzer off (error recovery): enables RUN+STOP, turns off buzzer
+    direction = "command"
+
+    [iet.IET_DOORLOCKSWITCH_PRESS]
+    opcode = "IEDRL"                  # Door lock poka-yoke (defined but not handled in Opcode_Polling)
+    direction = "command"
+
+    [iet.IET_DHBLS]
+    opcode = "DHBLS"                  # Full reset: stops timers, disables all buttons/motors/interrupts/sensors, resets all flags
+    direction = "command"
+
+    [iet.IET_HARDWARE_BUTTON_DISABLE]
+    opcode = "HWBDB"                  # Disable all hardware buttons and turn off all indicator lamps (motors/tower unaffected)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 21: REFERENCE SEARCH
+# ============================================================================
+# Camera reference search with SPM delay for calibration
+
+[reference_search]
+
+    [reference_search.Top_Camera_Reference_search]
+    opcode = "RFS01"                  # Execute top LCS sequence, wait SPM delay, respond with TRD01
+    direction = "command"
+
+    [reference_search.Bottom_Camera_Reference_search]
+    opcode = "RFS02"                  # Execute bottom LCS sequence, wait SPM delay, respond with TRD02
+    direction = "command"
+
+    [reference_search.Top_Reference_Search_Response]
+    opcode = "TRD01"                  # Response: top reference search complete
+    direction = "response"
+
+    [reference_search.Bottom_Reference_Search_Response]
+    opcode = "TRD02"                  # Response: bottom reference search complete
+    direction = "response"
+
+    [reference_search.Top_SPM_Delay]
+    opcode = "SPM01"                  # Set top SPM delay value in microseconds (reads into gspmdelay_Top)
+    direction = "command"
+
+    [reference_search.Bottom_SPM_Delay]
+    opcode = "SPM02"                  # Set bottom SPM delay value in microseconds (reads into gspmdelay_Bottom)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 22: REJECTION LOGIC
+# ============================================================================
+# Rejection detection via interrupt-driven bottom sensor with debounce
+
+[rejection]
+
+    [rejection.Rejectionlogic_Enable]
+    opcode = "RJENB"                  # Enable rejection logic: I2C2 pin 7 HIGH, enables interrupt on bottom sensor
+    direction = "command"
+
+    [rejection.Rejection_Done]
+    opcode = "RJDNE"                  # Response: rejection detection complete (valid trigger received)
+    direction = "response"
+
+
+# ============================================================================
+# SEGMENT 23: I2C EXPANDER INITIALIZATION
+# ============================================================================
+# Re-initialize MCP23008 I2C I/O expanders (slots 1-3)
+
+[i2c_init]
+
+    [i2c_init.I2C1_INITIALIZATION]
+    opcode = "I2C1"                   # Re-initialize I2C expander slot 1 as input (buttons/switches)
+    direction = "command"
+
+    [i2c_init.I2C2_INITIALIZATION]
+    opcode = "I2C2"                   # Re-initialize I2C expander slot 2 as output (sensor power)
+    direction = "command"
+
+    [i2c_init.I2C3_INITIALIZATION]
+    opcode = "I2C3"                   # Re-initialize I2C expander slot 3 as output (lamps/indicators)
+    direction = "command"
+
+
+# ============================================================================
+# SEGMENT 24: MCP23008 I2C REGISTER DEFINITIONS (Internal)
+# ============================================================================
+# MCP23008 I/O expander register addresses used internally by i2c_Functions.ino
+
+[i2c_registers]
+
+    [i2c_registers.IODIR]
+    address = 0x00                    # I/O Direction Register (0=output, 1=input per bit)
+
+    [i2c_registers.IPOL]
+    address = 0x01                    # Input Polarity Register (invert GPIO input logic)
+
+    [i2c_registers.GPINTEN]
+    address = 0x02                    # GPIO Interrupt-on-Change enable register
+
+    [i2c_registers.DEFVAL]
+    address = 0x03                    # Default Compare Register for interrupt-on-change
+
+    [i2c_registers.INTCON]
+    address = 0x04                    # Interrupt Control Register
+
+    [i2c_registers.IOCON]
+    address = 0x05                    # I/O Configuration Register (sequential op, slew rate, HAEN, ODR, INTPOL)
+
+    [i2c_registers.GPPU]
+    address = 0x06                    # Pull-Up Resistor Configuration Register
+
+    [i2c_registers.INTF]
+    address = 0x07                    # Interrupt Flag Register
+
+    [i2c_registers.INTCAP]
+    address = 0x08                    # Interrupt Capture Register (GPIO value when interrupt occurred)
+
+
+# ============================================================================
+# SEGMENT 25: MCP23008 I2C CONFIGURATION VALUES (Internal)
+# ============================================================================
+# Configuration constants for IOCON and GPIO setup
+
+[i2c_config]
+
+    [i2c_config.ENABLE_SEQUENTIAL_OP]
+    value = 0xFF                      # Enable sequential read operation
+
+    [i2c_config.DISABLE_SEQUENTIAL_OP]
+    value = 0x20                      # Disable sequential read
+
+    [i2c_config.ENABLE_SLEW_RATE]
+    value = 0x00                      # Slew rate enabled (default)
+
+    [i2c_config.DISABLE_SLEW_RATE]
+    value = 0x10                      # Disable I2C slew rate control
+
+    [i2c_config.SET_HAEN]
+    value = 0x08                      # Enable hardware address pins
+
+    [i2c_config.RESET_HAEN]
+    value = 0x00                      # Disable hardware address pins
+
+    [i2c_config.SET_ODR]
+    value = 0x04                      # Set open-drain output
+
+    [i2c_config.RESET_ODR]
+    value = 0x00                      # Active driver output
+
+    [i2c_config.INTPOL_HIGH]
+    value = 0x02                      # Interrupt polarity active-high
+
+    [i2c_config.INTPOL_LOW]
+    value = 0x00                      # Interrupt polarity active-low
+
+    [i2c_config.ALLPINS_AS_INOROUT]
+    value = 0xFF                      # All pins configured as input or output
+
+    [i2c_config.ALL_INPUTS_PULLEDUP]
+    value = 0x00                      # All inputs pull-up config (0x00 = no pull-ups)
+
+    [i2c_config.INPUT_POLARITY]
+    value = 0xFF                      # Invert all input GPIO polarity
+
+
+# ============================================================================
+# SEGMENT 26: TMC5160 STEPPER DRIVER SPI REGISTERS — MOTOR 1 (Guide/Stepper)
+# ============================================================================
+# SPI register addresses for TMC5160 Motor 1 (guide stepper motor)
+
+[tmc5160_motor1]
+
+    [tmc5160_motor1.GCONF]
+    address = 0x80                    # General configuration (shaft direction, etc.)
+
+    [tmc5160_motor1.CHOPCONF]
+    address = 0xEC                    # Chopper config: TOFF=5, HSTRT=4, HEND=1, TBL=2, spreadCycle
+
+    [tmc5160_motor1.IHOLD_IRUN]
+    address = 0xB0                    # Current setting: IHOLD=5, IRUN=31 (max current), IHOLDDELAY=1
+
+    [tmc5160_motor1.TZEROWAIT]
+    address = 0xAC                    # Zero wait time = 10000
+
+    [tmc5160_motor1.PWMCONF]
+    address = 0x90                    # PWM / stealthChop configuration
+
+    [tmc5160_motor1.VHIGH]
+    address = 0xB2                    # Upper velocity for stealthChop = 400000
+
+    [tmc5160_motor1.VCOOLTHRS]
+    address = 0xB1                    # CoolStep/stealthChop threshold = 30000 (~30 RPM)
+
+    [tmc5160_motor1.COOLCONF]
+    address = 0xED                    # CoolStep configuration
+
+    [tmc5160_motor1.RAMPMODE]
+    address = 0xA0                    # Ramp mode: 0=positioning, 1=velocity positive
+
+    [tmc5160_motor1.XACTUAL]
+    address = 0xA1                    # Set actual position to 0
+
+    [tmc5160_motor1.A1]
+    address = 0xA4                    # Acceleration phase 1 = 1000
+
+    [tmc5160_motor1.V1]
+    address = 0xA5                    # Velocity phase 1 = 100000
+
+    [tmc5160_motor1.AMAX]
+    address = 0xA6                    # Max acceleration = 60000
+
+    [tmc5160_motor1.VMAX]
+    address = 0xA7                    # Max velocity (256000 running, 0 to stop)
+
+    [tmc5160_motor1.DMAX]
+    address = 0xA8                    # Max deceleration
+
+    [tmc5160_motor1.D1]
+    address = 0xAA                    # Deceleration phase 1 = 1400
+
+    [tmc5160_motor1.VSTOP]
+    address = 0xAB                    # Stop velocity = 10
+
+    [tmc5160_motor1.XTARGET]
+    address = 0xAD                    # Target position in steps
+
+    [tmc5160_motor1.SW_MODE]
+    address = 0xB4                    # Switch/stop mode config = 0x0C
+
+    [tmc5160_motor1.X_COMPARE]
+    address = 0x85                    # Position comparison register (used for step-count matching)
+
+    [tmc5160_motor1.RAMP_STAT]
+    address = 0x35                    # Read ramp status; bit 0x80 = position reached flag (read-only)
+
+
+# ============================================================================
+# SEGMENT 27: TMC5160 STEPPER DRIVER SPI REGISTERS — MOTOR 2 (Reeler)
+# ============================================================================
+# SPI register addresses for TMC5160 Motor 2 (reeler motor)
+
+[tmc5160_motor2]
+
+    [tmc5160_motor2.CHOPCONF]
+    address = 0xFC                    # Chopper config for motor 2: TOFF=5, HSTRT=4, HEND=1, TBL=2
+
+    [tmc5160_motor2.IHOLD_IRUN]
+    address = 0xD0                    # Current setting for motor 2: IHOLD=5, IRUN=31
+
+    [tmc5160_motor2.RAMPMODE]
+    address = 0xC0                    # Ramp mode motor 2: 0=positioning, 1=velocity
+
+    [tmc5160_motor2.XACTUAL]
+    address = 0xC1                    # Actual position motor 2
+
+    [tmc5160_motor2.A1]
+    address = 0xC4                    # Acceleration phase 1 motor 2
+
+    [tmc5160_motor2.V1]
+    address = 0xC5                    # Velocity phase 1 motor 2
+
+    [tmc5160_motor2.AMAX]
+    address = 0xC6                    # Max acceleration motor 2
+
+    [tmc5160_motor2.VMAX]
+    address = 0xC7                    # Max velocity motor 2 (set to speed or 0 to stop)
+
+    [tmc5160_motor2.DMAX]
+    address = 0xC8                    # Max deceleration motor 2
+
+    [tmc5160_motor2.D1]
+    address = 0xCA                    # Deceleration phase 1 motor 2
+
+    [tmc5160_motor2.VSTOP]
+    address = 0xCB                    # Stop velocity motor 2
+
+    [tmc5160_motor2.XTARGET]
+    address = 0xCD                    # Target position motor 2
+
+    [tmc5160_motor2.SPI_READ_CYCLE]
+    address = 0x2D                    # Second SPI cycle address for reading back data (in receiveData)

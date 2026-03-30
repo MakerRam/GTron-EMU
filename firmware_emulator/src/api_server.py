@@ -71,7 +71,10 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
         """Send a command to the emulator.
         
         Expects JSON: {"command": "TPGOP"} (5-byte opcode string)
-        Returns: {"response": "TPGOR", "last_command": "TPGOP"}
+        Returns: {"response": "TPGOR", "responses": ["TPGOR"], "last_command": "TPGOP"}
+        
+        For multi-response opcodes (e.g. TPSAG), "responses" contains all frames
+        and "response" contains the first one.
         """
         if not command_handler or not device_state_ref:
             print(f"[DBG-API] /api/command: 501 - command_handler={command_handler!r}, device_state_ref={device_state_ref!r}", flush=True)
@@ -91,7 +94,7 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
             # Get current state from exporter's internal reference
             current_state = exporter._state
             
-            # Call handler
+            # Call handler (dispatch returns FLS for unknown opcodes, never raises KeyError)
             response, new_state = command_handler(opcode, current_state)
             
             # Record command in state for UI tracking (same as serial path in main.py)
@@ -100,11 +103,22 @@ def create_app(exporter: StateExporter, command_handler: Optional[Callable[[str,
             # Update exporter's state reference to point to new state
             exporter._state = new_state
             
-            print(f"[DBG-API] /api/command: done. exporter.last_command={exporter._state.last_command!r}", flush=True)
-            logger.info(f"Command processed: {opcode} -> {response}")
+            # Normalize response to list
+            if isinstance(response, list):
+                responses = response
+            elif response:
+                responses = [response]
+            else:
+                responses = []
+            
+            primary_response = responses[0] if responses else ""
+            
+            print(f"[DBG-API] /api/command: done. response={primary_response!r}, all={responses!r}", flush=True)
+            logger.info(f"Command processed: {opcode} -> {responses}")
             return jsonify({
                 "command": opcode,
-                "response": response,
+                "response": primary_response,
+                "responses": responses,
                 "last_command": new_state.last_command,
                 "status": "ok"
             })

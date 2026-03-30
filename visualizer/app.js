@@ -471,7 +471,7 @@ const debouncedButtons = new Set();
  * Handles debounce: disables the button for 500ms, then re-enables
  * on next successful state poll.
  *
- * @param {string} opcode - One of EMRUN, EMPAU, EMSTP, BZZOF
+ * @param {string} opcode - One of EMRUN, EMPAU, EMEST, BZZOF
  * @param {string} buttonId - DOM id of the button that was clicked
  */
 async function sendControlCommand(opcode, buttonId) {
@@ -533,7 +533,7 @@ function onControlClick(opcode) {
         'PWRON': 'btn-power',
         'EMRUN': 'btn-run',
         'EMPAU': 'btn-pause',
-        'EMSTP': 'btn-stop',
+        'EMEST': 'btn-stop',
         'BZZOF': 'btn-buzzer-off',
         'EMEXI': 'btn-estop'
     };

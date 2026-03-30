@@ -1,703 +1,926 @@
-"""Opcode handler registry and dispatch mechanism."""
+"""Opcode handler registry and dispatch mechanism.
+
+Complete implementation covering all 24 segments from opcodes.toml
+(TIME MACHINE V4.2 — GTRON 2-Rack System).
+
+Opcodes are registered in UPPERCASE. Both serial and HTTP entry points
+normalize to uppercase before dispatch, so case is irrelevant for callers.
+
+Handler return types:
+  - (str, DeviceState)        — single response
+  - (list[str], DeviceState)  — multiple responses sent back-to-back
+  - ("", DeviceState)         — fire-and-forget, no serial response
+"""
 import logging
-from typing import Callable, Dict, Tuple, Optional, Any
-from firmware_emulator.src.device_state import DeviceState, GuidePosition, RunState
+import time
+from typing import Callable, Dict, List, Tuple, Optional, Union, Any
+from firmware_emulator.src.device_state import (
+    DeviceState, GuidePosition, RunState,
+)
 
-
-# Handler function signature: (state) -> (response, new_state)
-HandlerFunc = Callable[[DeviceState], Tuple[str, DeviceState]]
+# Handler return: response can be str or list[str] for multi-response opcodes
+HandlerResponse = Union[str, List[str]]
+HandlerFunc = Callable[[DeviceState], Tuple[HandlerResponse, DeviceState]]
 
 
 class OpcodeHandler:
     """
     Registry and dispatcher for opcode handlers.
-    
+
     Each opcode maps to a handler function with signature:
-        handler(state: DeviceState) -> (response: str, new_state: DeviceState)
-    
-    Handlers are stateless - they receive immutable state and return new state.
+        handler(state: DeviceState) -> (response, new_state)
+
+    response is either:
+      - a single string (possibly empty for fire-and-forget commands)
+      - a list of strings for opcodes that send multiple frames (e.g. sag sensors)
+
+    Handlers are stateless — they receive immutable state and return new state.
     """
-    
-    def __init__(self, logger: logging.Logger):
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        delays: Optional[Dict[str, float]] = None,
+    ):
         """
-        Initialize OpcodeHandler with logger.
-        
+        Initialize OpcodeHandler.
+
         Args:
             logger: logging.Logger instance
+            delays: Optional dict mapping opcode -> delay in seconds
+                    before the response is sent.  Example:
+                        {"TPGOP": 0.5, "TPGCL": 0.5}
+                    Pass None or {} for instant responses.
         """
         self.logger = logger
         self.handlers: Dict[str, HandlerFunc] = {}
-        
-        # Register built-in handlers
+        self.delays: Dict[str, float] = delays or {}
+
+        # Register all handlers
         self._register_builtin_handlers()
-    
+
+    # ── Public API ────────────────────────────────────────────────────────
+
     def register(self, opcode: str, handler: HandlerFunc) -> None:
-        """
-        Register a handler for an opcode.
-        
-        Args:
-            opcode: Opcode string (e.g., 'QUERY', 'tpGOP')
-            handler: Handler function with signature (state) -> (response, new_state)
-        """
-        self.handlers[opcode] = handler
-        self.logger.info(f"Handler registered for opcode: {opcode}")
-    
+        """Register a handler for an opcode (stored uppercase)."""
+        key = opcode.upper()
+        self.handlers[key] = handler
+        self.logger.debug(f"Handler registered: {key}")
+
     def get_handler(self, opcode: str) -> HandlerFunc:
-        """
-        Retrieve a handler for an opcode.
-        
-        Args:
-            opcode: Opcode string
-        
-        Returns:
-            Handler function
-        
-        Raises:
-            KeyError: If opcode has no registered handler
-        """
-        if opcode not in self.handlers:
-            raise KeyError(f"No handler registered for opcode: {opcode}")
-        return self.handlers[opcode]
-    
-    def dispatch(self, opcode: str, state: DeviceState) -> Tuple[str, DeviceState]:
+        """Retrieve handler; raises KeyError if not found."""
+        key = opcode.upper()
+        if key not in self.handlers:
+            raise KeyError(f"No handler registered for opcode: {key}")
+        return self.handlers[key]
+
+    def dispatch(
+        self, opcode: str, state: DeviceState,
+    ) -> Tuple[HandlerResponse, DeviceState]:
         """
         Dispatch opcode to appropriate handler.
-        
-        Args:
-            opcode: Opcode string
-            state: Current DeviceState
-        
-        Returns:
-            Tuple (response, new_state)
-        
-        Raises:
-            KeyError: If opcode has no registered handler
+
+        If no handler is registered, returns "FLS" (incorrect opcode).
         """
-        handler = self.get_handler(opcode)
+        key = opcode.upper()
+        if key not in self.handlers:
+            self.logger.warning(f"Unknown opcode: {key} -> FLS")
+            return "FLS", state
+        handler = self.handlers[key]
         response, new_state = handler(state)
         return response, new_state
-    
+
+    def get_delay(self, opcode: str) -> float:
+        """Return configured delay (seconds) for an opcode, or 0."""
+        return self.delays.get(opcode.upper(), 0.0)
+
     def list_handlers(self) -> list:
-        """
-        List all registered opcode handlers.
-        
-        Returns:
-            List of registered opcode strings
-        """
+        """List all registered opcode strings (sorted)."""
         return sorted(self.handlers.keys())
-    
+
+    # ── Built-in handler registration ─────────────────────────────────────
+
     def _register_builtin_handlers(self) -> None:
-        """Register built-in handlers for all firmware opcodes."""
-        # ===== COMMUNICATION & HANDSHAKE =====
+        """Register handlers for all firmware opcodes from opcodes.toml."""
+
+        # Helper shorthand
+        reg = self.register
+
+        # ==================================================================
+        # SEGMENT 1: COMMUNICATION / SYSTEM
+        # ==================================================================
+
         def handle_query(state: DeviceState) -> Tuple[str, DeviceState]:
-            """QUERY: Ping command - device is alive."""
+            """QUERY: Ping — respond YES."""
             return "YES", state
-        
-        self.register("QUERY", handle_query)
-        
-        # ===== INITIALIZATION =====
-        def handle_smini(state: DeviceState) -> Tuple[str, DeviceState]:
-            """SMINI: Initialize communication board."""
-            # No response expected for SMINI
-            return "", state
-        
-        self.register("SMINI", handle_smini)
-        
-        # ===== DOOR LOCK =====
-        def handle_doorc(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DOORC: Check door lock status."""
-            response = "DL1" if state.door_locked else "DL0"
-            return response, state
-        
-        self.register("DOORC", handle_doorc)
-        
-        def handle_atdrl(state: DeviceState) -> Tuple[str, DeviceState]:
-            """ATDRL: Enable/Attach door lock."""
-            new_state = state.copy()
-            new_state.door_locked = True
-            return "", new_state
-        
-        self.register("ATDRL", handle_atdrl)
-        
-        def handle_dtdrl(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DTDRL: Disable/Detach door lock."""
-            new_state = state.copy()
-            new_state.door_locked = False
-            return "", new_state
-        
-        self.register("DTDRL", handle_dtdrl)
-        
-        # ===== GUIDE MOTOR CONTROL (TOP) =====
-        def handle_tpgop(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpGOP: Open top guide motor."""
-            new_state = state.copy()
-            new_state.guide_top.position = GuidePosition.OPEN
-            return "TPGOR", new_state  # TPGOR = Guide Open Response
-        
-        self.register("TPGOP", handle_tpgop)
-        
-        def handle_tpgcl(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpGCL: Close top guide motor."""
-            new_state = state.copy()
-            new_state.guide_top.position = GuidePosition.CLOSED
-            return "TPGCR", new_state  # TPGCR = Guide Close Response
-        
-        self.register("TPGCL", handle_tpgcl)
-        
-        def handle_tprtr(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpRTR: Rotate top reeler motor."""
-            new_state = state.copy()
-            new_state.reeler_top.running = True
-            return "", new_state
-        
-        self.register("TPRTR", handle_tprtr)
-        
-        def handle_tpgdi(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpGDI: Set guide distance index (motor steps for ready positions)."""
-            # Phase 1: Accept command without parameters
-            return "", state
-        
-        self.register("TPGDI", handle_tpgdi)
-        
-        # ===== LIMIT SWITCH STATUS (TOP) =====
-        def handle_tplsc(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpLSC: Check top limit switch status."""
-            # Check if at limit position
-            if state.guide_top.reached_limit:
-                return "TPOL1", state  # Limit pressed
-            else:
-                return "TPOL0", state  # Limit not pressed
-        
-        self.register("TPLSC", handle_tplsc)
-        
-        # ===== SENSOR CONTROL (TOP) =====
-        def handle_tpats(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpATS: Attach/Enable top sensor."""
-            new_state = state.copy()
-            new_state.sensor_top.attached = True
-            new_state.sensor_top.powered = True
-            return "", new_state
-        
-        self.register("TPATS", handle_tpats)
-        
-        def handle_tpdts(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpDTS: Detach/Disable top sensor."""
-            new_state = state.copy()
-            new_state.sensor_top.attached = False
-            new_state.sensor_top.powered = False
-            return "", new_state
-        
-        self.register("TPDTS", handle_tpdts)
-        
-        # ===== ENCODER CONTROL (TOP) =====
-        def handle_tpeni(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpENI: Initialize top encoder."""
-            new_state = state.copy()
-            new_state.encoder_top.initialized = True
-            return "", new_state
-        
-        self.register("TPENI", handle_tpeni)
-        
-        def handle_tpeen(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpEEN: Enable top encoder."""
-            new_state = state.copy()
-            new_state.encoder_top.enabled = True
-            return "", new_state
-        
-        self.register("TPEEN", handle_tpeen)
-        
-        def handle_tpedb(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpEDB: Disable top encoder."""
-            new_state = state.copy()
-            new_state.encoder_top.enabled = False
-            return "", new_state
-        
-        self.register("TPEDB", handle_tpedb)
-        
-        def handle_tprsp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpRSP: Set encoder starting position."""
-            new_state = state.copy()
-            new_state.encoder_top.position = 0
-            return "", new_state
-        
-        self.register("TPRSP", handle_tprsp)
-        
-        def handle_tprth(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpRTH: Set encoder teeth/resolution."""
-            new_state = state.copy()
-            # Parse teeth count if provided (Phase 2)
-            return "", new_state
-        
-        self.register("TPRTH", handle_tprth)
-        
-        def handle_tpina(state: DeviceState) -> Tuple[str, DeviceState]:
-            """tpINA: Set encoder index."""
-            new_state = state.copy()
-            new_state.encoder_top.initial_angle = 0
-            return "", new_state
-        
-        self.register("TPINA", handle_tpina)
-        
-        # ===== GUIDE MOTOR CONTROL (BOTTOM) =====
-        def handle_bmgop(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmGOP: Open bottom guide motor."""
-            new_state = state.copy()
-            new_state.guide_bottom.position = GuidePosition.OPEN
-            return "BMGOR", new_state
-        
-        self.register("BMGOP", handle_bmgop)
-        
-        def handle_bmgcl(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmGCL: Close bottom guide motor."""
-            new_state = state.copy()
-            new_state.guide_bottom.position = GuidePosition.CLOSED
-            return "BMGCR", new_state
-        
-        self.register("BMGCL", handle_bmgcl)
-        
-        def handle_bmrtr(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmRTR: Rotate bottom reeler motor."""
-            new_state = state.copy()
-            new_state.reeler_bottom.running = True
-            return "", new_state
-        
-        self.register("BMRTR", handle_bmrtr)
-        
-        def handle_bmgdi(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmGDI: Set bottom guide distance index."""
-            return "", state
-        
-        self.register("BMGDI", handle_bmgdi)
-        
-        # ===== LIMIT SWITCH STATUS (BOTTOM) =====
-        def handle_bmlsc(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmLSC: Check bottom limit switch status."""
-            if state.guide_bottom.reached_limit:
-                return "BMOL1", state
-            else:
-                return "BMOL0", state
-        
-        self.register("BMLSC", handle_bmlsc)
-        
-        # ===== SENSOR CONTROL (BOTTOM) =====
-        def handle_bmats(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmATS: Attach/Enable bottom sensor."""
-            new_state = state.copy()
-            new_state.sensor_bottom.attached = True
-            new_state.sensor_bottom.powered = True
-            return "", new_state
-        
-        self.register("BMATS", handle_bmats)
-        
-        def handle_bmdts(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmDTS: Detach/Disable bottom sensor."""
-            new_state = state.copy()
-            new_state.sensor_bottom.attached = False
-            new_state.sensor_bottom.powered = False
-            return "", new_state
-        
-        self.register("BMDTS", handle_bmdts)
-        
-        # ===== ENCODER CONTROL (BOTTOM) =====
-        def handle_bmeni(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmENI: Initialize bottom encoder."""
-            new_state = state.copy()
-            new_state.encoder_bottom.initialized = True
-            return "", new_state
-        
-        self.register("BMENI", handle_bmeni)
-        
-        def handle_bmeen(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmEEN: Enable bottom encoder."""
-            new_state = state.copy()
-            new_state.encoder_bottom.enabled = True
-            return "", new_state
-        
-        self.register("BMEEN", handle_bmeen)
-        
-        def handle_bmedb(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmEDB: Disable bottom encoder."""
-            new_state = state.copy()
-            new_state.encoder_bottom.enabled = False
-            return "", new_state
-        
-        self.register("BMEDB", handle_bmedb)
-        
-        def handle_bmrsp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmRSP: Set bottom encoder starting position."""
-            new_state = state.copy()
-            new_state.encoder_bottom.position = 0
-            return "", new_state
-        
-        self.register("BMRSP", handle_bmrsp)
-        
-        def handle_bmrth(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmRTH: Set bottom encoder teeth/resolution."""
-            return "", state
-        
-        self.register("BMRTH", handle_bmrth)
-        
-        def handle_bmina(state: DeviceState) -> Tuple[str, DeviceState]:
-            """bmINA: Set bottom encoder index."""
-            new_state = state.copy()
-            new_state.encoder_bottom.initial_angle = 0
-            return "", new_state
-        
-        self.register("BMINA", handle_bmina)
-        
-        # ===== LIGHT & CAMERA SEQUENCES =====
-        def handle_lcs01(state: DeviceState) -> Tuple[str, DeviceState]:
-            """LCS01: Trigger light-camera sequence 1."""
-            new_state = state.copy()
-            new_state.cameras.flags[0] = True
-            new_state.cameras.active_sequence = 1
-            return "", new_state
-        
-        self.register("LCS01", handle_lcs01)
-        
-        def handle_lcs02(state: DeviceState) -> Tuple[str, DeviceState]:
-            """LCS02: Trigger light-camera sequence 2."""
-            new_state = state.copy()
-            new_state.cameras.flags[1] = True
-            new_state.cameras.active_sequence = 2
-            return "", new_state
-        
-        self.register("LCS02", handle_lcs02)
-        
-        def handle_lcs03(state: DeviceState) -> Tuple[str, DeviceState]:
-            """LCS03: Trigger light-camera sequence 3."""
-            new_state = state.copy()
-            new_state.cameras.flags[2] = True
-            new_state.cameras.active_sequence = 3
-            return "", new_state
-        
-        self.register("LCS03", handle_lcs03)
-        
-        def handle_lcstp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """LCStp: Trigger all light-camera sequences."""
-            new_state = state.copy()
-            for i in range(7):
-                new_state.cameras.flags[i] = True
-            new_state.cameras.active_sequence = -1  # All
-            return "", new_state
-        
-        self.register("LCSTP", handle_lcstp)
-        
-        def handle_lcsbm(state: DeviceState) -> Tuple[str, DeviceState]:
-            """LCSbm: Trigger bottom light-camera sequences."""
-            new_state = state.copy()
-            new_state.cameras.flags[3] = True
-            new_state.cameras.flags[4] = True
-            new_state.cameras.flags[5] = True
-            new_state.cameras.active_sequence = 2  # Bottom
-            return "", new_state
-        
-        self.register("LCSBM", handle_lcsbm)
-        
-        # ===== SENSOR POWER CONTROL =====
-        def handle_pos01(state: DeviceState) -> Tuple[str, DeviceState]:
-            """POS01: Power on sensor 1."""
-            new_state = state.copy()
-            new_state.sensor_top.powered = True
-            return "", new_state
-        
-        self.register("POS01", handle_pos01)
-        
-        def handle_pos02(state: DeviceState) -> Tuple[str, DeviceState]:
-            """POS02: Power on sensor 2."""
-            new_state = state.copy()
-            new_state.sensor_bottom.powered = True
-            return "", new_state
-        
-        self.register("POS02", handle_pos02)
-        
-        def handle_pos03(state: DeviceState) -> Tuple[str, DeviceState]:
-            """POS03: Power on sensor 3."""
-            # Phase 1: Generic sensor power on
-            return "", state
-        
-        self.register("POS03", handle_pos03)
-        
-        # ===== TOWER LAMPS =====
-        def handle_tred1(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TRED1: Turn red tower lamp ON."""
-            new_state = state.copy()
-            new_state.lamps.red = True
-            return "", new_state
-        
-        self.register("TRED1", handle_tred1)
-        
-        def handle_tred0(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TRED0: Turn red tower lamp OFF."""
-            new_state = state.copy()
-            new_state.lamps.red = False
-            return "", new_state
-        
-        self.register("TRED0", handle_tred0)
-        
-        def handle_tyel1(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TYEL1: Turn yellow tower lamp ON."""
-            new_state = state.copy()
-            new_state.lamps.yellow = True
-            return "", new_state
-        
-        self.register("TYEL1", handle_tyel1)
-        
-        def handle_tyel0(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TYEL0: Turn yellow tower lamp OFF."""
-            new_state = state.copy()
-            new_state.lamps.yellow = False
-            return "", new_state
-        
-        self.register("TYEL0", handle_tyel0)
-        
-        def handle_tgrn1(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TGRN1: Turn green tower lamp ON."""
-            new_state = state.copy()
-            new_state.lamps.green = True
-            return "", new_state
-        
-        self.register("TGRN1", handle_tgrn1)
-        
-        def handle_tgrn0(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TGRN0: Turn green tower lamp OFF."""
-            new_state = state.copy()
-            new_state.lamps.green = False
-            return "", new_state
-        
-        self.register("TGRN0", handle_tgrn0)
-        
-        def handle_tbzr1(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TBZR1: Turn buzzer ON."""
-            new_state = state.copy()
-            new_state.lamps.buzzer = True
-            return "", new_state
-        
-        self.register("TBZR1", handle_tbzr1)
-        
-        def handle_tbzr0(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TBZR0: Turn buzzer OFF."""
-            new_state = state.copy()
-            new_state.lamps.buzzer = False
-            return "", new_state
-        
-        self.register("TBZR0", handle_tbzr0)
-        
-        # ===== HARDWARE BUTTON CONTROL =====
-        def handle_atrun(state: DeviceState) -> Tuple[str, DeviceState]:
-            """ATRUN: Attach/Enable RUN button interrupt."""
-            return "", state
-        
-        self.register("ATRUN", handle_atrun)
-        
-        def handle_dtrun(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DTRUN: Detach/Disable RUN button interrupt."""
-            return "", state
-        
-        self.register("DTRUN", handle_dtrun)
-        
-        def handle_atpau(state: DeviceState) -> Tuple[str, DeviceState]:
-            """ATPAU: Attach/Enable PAUSE button interrupt."""
-            return "", state
-        
-        self.register("ATPAU", handle_atpau)
-        
-        def handle_dtpau(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DTPAU: Detach/Disable PAUSE button interrupt."""
-            return "", state
-        
-        self.register("DTPAU", handle_dtpau)
-        
-        def handle_atstp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """ATSTP: Attach/Enable STOP button interrupt."""
-            return "", state
-        
-        self.register("ATSTP", handle_atstp)
-        
-        def handle_dtstp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DTSTP: Detach/Disable STOP button interrupt."""
-            return "", state
-        
-        self.register("DTSTP", handle_dtstp)
-        
-        def handle_atbof(state: DeviceState) -> Tuple[str, DeviceState]:
-            """ATBOF: Attach/Enable BUZZER OFF button interrupt."""
-            return "", state
-        
-        self.register("ATBOF", handle_atbof)
-        
-        def handle_dtbof(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DTBOF: Detach/Disable BUZZER OFF button interrupt."""
-            return "", state
-        
-        self.register("DTBOF", handle_dtbof)
-        
-        # ===== SHUTDOWN =====
-        def handle_tpstp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TPSTP: Shutdown/Stop command."""
-            return "", state
-        
-        self.register("TPSTP", handle_tpstp)
-        
-        def handle_tpstr(state: DeviceState) -> Tuple[str, DeviceState]:
-            """TPSTR: Status/State response."""
-            # This is a response opcode, not typically called
-            return "TPSTR", state
-        
-        self.register("TPSTR", handle_tpstr)
-        
-        # ===== INTERRUPT TRIGGER EVENTS (IE*) =====
-        def handle_iesel(state: DeviceState) -> Tuple[str, DeviceState]:
-            """IESEL: Select button pressed - interrupt trigger."""
-            # IE* opcodes are interrupt triggers from hardware buttons
-            # They don't have standard responses, just acknowledge receipt
-            return "", state
-        
-        self.register("IESEL", handle_iesel)
-        
-        def handle_ierun(state: DeviceState) -> Tuple[str, DeviceState]:
-            """IERUN: Run button pressed - interrupt trigger."""
-            return "", state
-        
-        self.register("IERUN", handle_ierun)
-        
-        def handle_iepau(state: DeviceState) -> Tuple[str, DeviceState]:
-            """IEPAU: Pause button pressed - interrupt trigger."""
-            return "", state
-        
-        self.register("IEPAU", handle_iepau)
-        
-        def handle_iepas(state: DeviceState) -> Tuple[str, DeviceState]:
-            """IEPAS: Pass/Success event - interrupt trigger."""
-            return "", state
-        
-        self.register("IEPAS", handle_iepas)
-        
-        def handle_iefai(state: DeviceState) -> Tuple[str, DeviceState]:
-            """IEFAI: Fail/Error event - interrupt trigger."""
-            return "", state
-        
-        self.register("IEFAI", handle_iefai)
-        
-        # ===== ADDITIONAL HANDLERS FOR COMPLETENESS =====
-        def handle_rfs01(state: DeviceState) -> Tuple[str, DeviceState]:
-            """RFS01: Reference search command."""
-            return "TRD01", state  # Return "Done" response
-        
-        self.register("RFS01", handle_rfs01)
-        
-        def handle_dhbls(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DHBLS: Disable all hardware buttons and sensors."""
-            new_state = state.copy()
-            new_state.sensor_top.attached = False
-            new_state.sensor_bottom.attached = False
-            new_state.encoder_top.enabled = False
-            new_state.encoder_bottom.enabled = False
-            return "", new_state
-        
-        self.register("DHBLS", handle_dhbls)
-        
-        def handle_hwbdb(state: DeviceState) -> Tuple[str, DeviceState]:
-            """HWBDB: Hardware button debug."""
-            return "", state
-        
-        self.register("HWBDB", handle_hwbdb)
-        
-        # ===== MISSING SPECIFICATION OPCODES =====
-        def handle_run(state: DeviceState) -> Tuple[str, DeviceState]:
-            """RUN: Run/Start machine command."""
-            return "", state
-        
-        self.register("RUN", handle_run)
-        
-        def handle_stp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """STP: Stop machine command."""
-            return "", state
-        
-        self.register("STP", handle_stp)
-        
-        def handle_pau(state: DeviceState) -> Tuple[str, DeviceState]:
-            """PAU: Pause machine command."""
-            return "", state
-        
-        self.register("PAU", handle_pau)
-        
-        def handle_bof(state: DeviceState) -> Tuple[str, DeviceState]:
-            """BOF: Buzzer off."""
-            new_state = state.copy()
-            new_state.lamps.buzzer = False
-            return "", new_state
-        
-        self.register("BOF", handle_bof)
-        
-        def handle_bofdr(state: DeviceState) -> Tuple[str, DeviceState]:
-            """BOFDR: Buzzer off debug response."""
-            return "", state
-        
-        self.register("BOFDR", handle_bofdr)
-        
-        def handle_bofer(state: DeviceState) -> Tuple[str, DeviceState]:
-            """BOFER: Buzzer off error response."""
-            return "FLS", state
-        
-        self.register("BOFER", handle_bofer)
-        
-        def handle_dul(state: DeviceState) -> Tuple[str, DeviceState]:
-            """DUL: Door unlock."""
-            new_state = state.copy()
-            new_state.door_locked = False
-            return "", new_state
-        
-        self.register("DUL", handle_dul)
-        
-        def handle_grd(state: DeviceState) -> Tuple[str, DeviceState]:
-            """GRD: Ground/Reference command."""
-            return "", state
-        
-        self.register("GRD", handle_grd)
-        
+        reg("QUERY", handle_query)
+
+        def handle_tsenb(state: DeviceState) -> Tuple[str, DeviceState]:
+            """TSENB: Enable timestamp output during inspection."""
+            ns = state.copy()
+            ns.cameras.timestamp_enabled = True
+            return "", ns
+        reg("TSENB", handle_tsenb)
+
+        # MIRSP is a response opcode but may arrive from MI; set insync flag
         def handle_mirsp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """MIRSP: Machine interface response."""
-            return "", state
-        
-        self.register("MIRSP", handle_mirsp)
-        
-        # ===== EMULATOR CONTROL (UI BUTTONS) =====
-        def handle_emrun(state: DeviceState) -> Tuple[str, DeviceState]:
-            """EMRUN: Set emulator run state to RUNNING."""
-            new_state = state.copy()
-            new_state.run_state = RunState.RUNNING
-            return "EMROK", new_state
+            """MIRSP: Machine Interface response — set insync=true."""
+            ns = state.copy()
+            ns.insync = True
+            return "", ns
+        reg("MIRSP", handle_mirsp)
 
-        self.register("EMRUN", handle_emrun)
+        # ==================================================================
+        # SEGMENT 2: EMERGENCY STOP / MACHINE POWER
+        # ==================================================================
 
-        def handle_empau(state: DeviceState) -> Tuple[str, DeviceState]:
-            """EMPAU: Set emulator run state to PAUSED."""
-            new_state = state.copy()
-            new_state.run_state = RunState.PAUSED
-            return "EMPOK", new_state
+        def handle_emstp_check(state: DeviceState) -> Tuple[str, DeviceState]:
+            """EMSTP: Check e-stop / machine power status."""
+            if state.estop_pressed:
+                return "MP0", state   # Machine power OFF (e-stop pressed)
+            else:
+                return "MP1", state   # Machine power ON
+        reg("EMSTP", handle_emstp_check)
 
-        self.register("EMPAU", handle_empau)
+        # ==================================================================
+        # SEGMENT 3: PUSH BUTTON ATTACH / DETACH
+        # ==================================================================
 
-        def handle_emstp(state: DeviceState) -> Tuple[str, DeviceState]:
-            """EMSTP: Set emulator run state to STOPPED."""
-            new_state = state.copy()
-            new_state.run_state = RunState.STOPPED
-            return "EMSOK", new_state
+        def handle_atrun(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.run = True; return "", ns
+        reg("ATRUN", handle_atrun)
 
-        self.register("EMSTP", handle_emstp)
+        def handle_dtrun(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.run = False; return "", ns
+        reg("DTRUN", handle_dtrun)
 
-        def handle_bzzof(state: DeviceState) -> Tuple[str, DeviceState]:
-            """BZZOF: Set buzzer override to True (silence buzzer)."""
-            new_state = state.copy()
-            new_state.buzzer_override = True
-            return "BZZOK", new_state
+        def handle_atpau(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.pause = True; return "", ns
+        reg("ATPAU", handle_atpau)
 
-        self.register("BZZOF", handle_bzzof)
+        def handle_dtpau(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.pause = False; return "", ns
+        reg("DTPAU", handle_dtpau)
 
-        # ===== ERROR HANDLING =====
-        def handle_fls(state: DeviceState) -> Tuple[str, DeviceState]:
-            """FLS: Failed/Error response (standard failure response)."""
-            return "FLS", state
-        
-        self.register("FLS", handle_fls)
+        def handle_atstp(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.stop = True; return "", ns
+        reg("ATSTP", handle_atstp)
+
+        def handle_dtstp(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.stop = False; return "", ns
+        reg("DTSTP", handle_dtstp)
+
+        def handle_atbof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.buzzeroff = True; return "", ns
+        reg("ATBOF", handle_atbof)
+
+        def handle_dtbof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.buzzeroff = False; return "", ns
+        reg("DTBOF", handle_dtbof)
+
+        def handle_atdrl(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.doorlock = True; return "", ns
+        reg("ATDRL", handle_atdrl)
+
+        def handle_dtdrl(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_flags.doorlock = False; return "", ns
+        reg("DTDRL", handle_dtdrl)
+
+        # ==================================================================
+        # SEGMENT 5: PUSH BUTTON INDICATOR LAMPS
+        # ==================================================================
+
+        def handle_runon(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.run = True; return "", ns
+        reg("RUNON", handle_runon)
+
+        def handle_runof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.run = False; return "", ns
+        reg("RUNOF", handle_runof)
+
+        def handle_pauon(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.pause = True; return "", ns
+        reg("PAUON", handle_pauon)
+
+        def handle_pauof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.pause = False; return "", ns
+        reg("PAUOF", handle_pauof)
+
+        def handle_stpon(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.stop = True; return "", ns
+        reg("STPON", handle_stpon)
+
+        def handle_stpof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.stop = False; return "", ns
+        reg("STPOF", handle_stpof)
+
+        def handle_bzron(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.buzzer = True; return "", ns
+        reg("BZRON", handle_bzron)
+
+        def handle_bzrof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.button_lamps.buzzer = False; return "", ns
+        reg("BZROF", handle_bzrof)
+
+        # ==================================================================
+        # SEGMENT 6: TOWER LAMP
+        # ==================================================================
+
+        def handle_tred1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.red = True; return "", ns
+        reg("TRED1", handle_tred1)
+
+        def handle_tred0(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.red = False; return "", ns
+        reg("TRED0", handle_tred0)
+
+        def handle_tyel1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.yellow = True; return "", ns
+        reg("TYEL1", handle_tyel1)
+
+        def handle_tyel0(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.yellow = False; return "", ns
+        reg("TYEL0", handle_tyel0)
+
+        def handle_tgrn1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.green = True; return "", ns
+        reg("TGRN1", handle_tgrn1)
+
+        def handle_tgrn0(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.green = False; return "", ns
+        reg("TGRN0", handle_tgrn0)
+
+        def handle_tbzr1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.buzzer = True; return "", ns
+        reg("TBZR1", handle_tbzr1)
+
+        def handle_tbzr0(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.lamps.buzzer = False; return "", ns
+        reg("TBZR0", handle_tbzr0)
+
+        # ==================================================================
+        # SEGMENT 7: STAMPING, WINDING & SOLENOID
+        # ==================================================================
+
+        def handle_stmp1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.stamping_relay = True; return "", ns
+        reg("STMP1", handle_stmp1)
+
+        def handle_stmp0(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.stamping_relay = False; return "", ns
+        reg("STMP0", handle_stmp0)
+
+        def handle_wind1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.winding_relay = True; return "", ns
+        reg("WIND1", handle_wind1)
+
+        def handle_wind0(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.winding_relay = False; return "", ns
+        reg("WIND0", handle_wind0)
+
+        def handle_solon(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.solenoid_top = True; return "", ns
+        reg("SOLON", handle_solon)
+
+        def handle_solof(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.solenoid_top = False; return "", ns
+        reg("SOLOF", handle_solof)
+
+        # ==================================================================
+        # SEGMENT 8: DOOR LOCK / PRESSURE SWITCH
+        # ==================================================================
+
+        def handle_doorc(s: DeviceState) -> Tuple[str, DeviceState]:
+            """DOORC: Check door lock limit switches."""
+            return ("DL1" if s.door_locked else "DL0"), s
+        reg("DOORC", handle_doorc)
+
+        def handle_pswen(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.pressure_switch_enabled = True; return "", ns
+        reg("PSWEN", handle_pswen)
+
+        def handle_pswdb(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.pressure_switch_enabled = False; return "", ns
+        reg("PSWDB", handle_pswdb)
+
+        def handle_pswck(s: DeviceState) -> Tuple[str, DeviceState]:
+            """PSWCK: One-shot check of pressure switch state."""
+            return ("PSWON" if s.pressure_switch_on else "PSWOF"), s
+        reg("PSWCK", handle_pswck)
+
+        # ==================================================================
+        # SEGMENT 9: SAG SENSOR (dual response)
+        # ==================================================================
+
+        def handle_tpsag(s: DeviceState) -> Tuple[List[str], DeviceState]:
+            """TPSAG: Check top rack sag sensors — two responses."""
+            r1 = "TU1" if not s.sag_top_upper else "TU0"
+            r2 = "TL1" if not s.sag_top_lower else "TL0"
+            return [r1, r2], s
+        reg("TPSAG", handle_tpsag)
+
+        def handle_bmsag(s: DeviceState) -> Tuple[List[str], DeviceState]:
+            """BMSAG: Check bottom rack sag sensors — two responses."""
+            r1 = "BU1" if not s.sag_bottom_upper else "BU0"
+            r2 = "BL1" if not s.sag_bottom_lower else "BL0"
+            return [r1, r2], s
+        reg("BMSAG", handle_bmsag)
+
+        # ==================================================================
+        # SEGMENT 10: GUIDE MOTOR
+        # ==================================================================
+
+        def handle_tpgop(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpGOP: Open top guide motor."""
+            ns = s.copy()
+            ns.guide_top.position = GuidePosition.OPEN
+            ns.guide_top.reached_limit = True  # open limit reached
+            return "TPGOR", ns
+        reg("TPGOP", handle_tpgop)
+
+        def handle_tpgcl(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpGCL: Close top guide motor."""
+            ns = s.copy()
+            ns.guide_top.position = GuidePosition.CLOSED
+            ns.guide_top.reached_limit = False
+            return "TPGCR", ns
+        reg("TPGCL", handle_tpgcl)
+
+        def handle_bmgop(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmGOP: Open bottom guide motor."""
+            ns = s.copy()
+            ns.guide_bottom.position = GuidePosition.OPEN
+            ns.guide_bottom.reached_limit = True
+            return "BMGOR", ns
+        reg("BMGOP", handle_bmgop)
+
+        def handle_bmgcl(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmGCL: Close bottom guide motor."""
+            ns = s.copy()
+            ns.guide_bottom.position = GuidePosition.CLOSED
+            ns.guide_bottom.reached_limit = False
+            return "BMGCR", ns
+        reg("BMGCL", handle_bmgcl)
+
+        def handle_tpgdi(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpGDI: Move top guide to steps — Phase 2 param support needed."""
+            return "", s
+        reg("TPGDI", handle_tpgdi)
+
+        def handle_bmgdi(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmGDI: Move bottom guide to steps — Phase 2 param support needed."""
+            return "", s
+        reg("BMGDI", handle_bmgdi)
+
+        def handle_tpgts(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpGTS: Top guide test — open then close sequence."""
+            ns = s.copy()
+            ns.guide_top.position = GuidePosition.OPEN
+            return "", ns
+        reg("TPGTS", handle_tpgts)
+
+        def handle_bmgts(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmGTS: Bottom guide test — open then close sequence."""
+            ns = s.copy()
+            ns.guide_bottom.position = GuidePosition.OPEN
+            return "", ns
+        reg("BMGTS", handle_bmgts)
+
+        # ==================================================================
+        # SEGMENT 11: LIMIT SWITCH CHECK
+        # ==================================================================
+
+        def handle_tplsc(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpLSC: Check top open limit switch."""
+            return ("TPOL1" if s.guide_top.reached_limit else "TPOL0"), s
+        reg("TPLSC", handle_tplsc)
+
+        def handle_bmlsc(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmLSC: Check bottom open limit switch."""
+            return ("BMOL1" if s.guide_bottom.reached_limit else "BMOL0"), s
+        reg("BMLSC", handle_bmlsc)
+
+        # ==================================================================
+        # SEGMENT 12: STEPPER / REELER MOTOR INITIALIZATION
+        # ==================================================================
+
+        def handle_smini(s: DeviceState) -> Tuple[str, DeviceState]:
+            """SMINI: Initialize stepper drivers (TMC5160 SPI config)."""
+            ns = s.copy()
+            ns.stepper_initialized = True
+            return "", ns
+        reg("SMINI", handle_smini)
+
+        def handle_rmini(s: DeviceState) -> Tuple[str, DeviceState]:
+            """RMINI: Initialize reeler motors (GCONF)."""
+            ns = s.copy()
+            ns.reeler_initialized = True
+            return "", ns
+        reg("RMINI", handle_rmini)
+
+        # ==================================================================
+        # SEGMENT 13: REELER MOTOR CONTROL
+        # ==================================================================
+
+        def handle_tpstr(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpSTR: Start top reeler motor."""
+            ns = s.copy()
+            ns.reeler_top.running = True
+            return "", ns
+        reg("TPSTR", handle_tpstr)
+
+        def handle_tpstp(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpSTP: Stop top reeler motor."""
+            ns = s.copy()
+            ns.reeler_top.running = False
+            return "", ns
+        reg("TPSTP", handle_tpstp)
+
+        def handle_bmstr(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmSTR: Start bottom reeler motor."""
+            ns = s.copy()
+            ns.reeler_bottom.running = True
+            return "", ns
+        reg("BMSTR", handle_bmstr)
+
+        def handle_bmstp(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmSTP: Stop bottom reeler motor."""
+            ns = s.copy()
+            ns.reeler_bottom.running = False
+            return "", ns
+        reg("BMSTP", handle_bmstp)
+
+        def handle_tprsp(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpRSP: Set top reeler speed — Phase 2 param support needed."""
+            return "", s
+        reg("TPRSP", handle_tprsp)
+
+        def handle_bmrsp(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmRSP: Set bottom reeler speed — Phase 2 param support needed."""
+            return "", s
+        reg("BMRSP", handle_bmrsp)
+
+        def handle_tprtr(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpRTR: Rotate top reeler (diagnostic) — responds RHD when done."""
+            ns = s.copy()
+            ns.reeler_top.running = True
+            return "RHD", ns
+        reg("TPRTR", handle_tprtr)
+
+        def handle_bmrtr(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmRTR: Rotate bottom reeler (diagnostic) — responds RHD."""
+            ns = s.copy()
+            ns.reeler_bottom.running = True
+            return "RHD", ns
+        reg("BMRTR", handle_bmrtr)
+
+        def handle_rmsmf(s: DeviceState) -> Tuple[str, DeviceState]:
+            """RMSMF: Set reeler multiplication factor — Phase 2 param."""
+            return "", s
+        reg("RMSMF", handle_rmsmf)
+
+        # ==================================================================
+        # SEGMENT 14: ENCODER
+        # ==================================================================
+
+        def handle_tpeni(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.encoder_top.initialized = True; return "", ns
+        reg("TPENI", handle_tpeni)
+
+        def handle_bmeni(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.encoder_bottom.initialized = True; return "", ns
+        reg("BMENI", handle_bmeni)
+
+        def handle_tpina(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpINA: Set top encoder initial angle — Phase 2 param."""
+            ns = s.copy(); ns.encoder_top.initial_angle = 0; return "", ns
+        reg("TPINA", handle_tpina)
+
+        def handle_bmina(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmINA: Set bottom encoder initial angle — Phase 2 param."""
+            ns = s.copy(); ns.encoder_bottom.initial_angle = 0; return "", ns
+        reg("BMINA", handle_bmina)
+
+        def handle_tpeen(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.encoder_top.enabled = True; return "", ns
+        reg("TPEEN", handle_tpeen)
+
+        def handle_tpedb(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.encoder_top.enabled = False; return "", ns
+        reg("TPEDB", handle_tpedb)
+
+        def handle_bmeen(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.encoder_bottom.enabled = True; return "", ns
+        reg("BMEEN", handle_bmeen)
+
+        def handle_bmedb(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.encoder_bottom.enabled = False; return "", ns
+        reg("BMEDB", handle_bmedb)
+
+        def handle_tprth(s: DeviceState) -> Tuple[str, DeviceState]:
+            """tpRTH: Set top reeler teeth count — Phase 2 param."""
+            return "", s
+        reg("TPRTH", handle_tprth)
+
+        def handle_bmrth(s: DeviceState) -> Tuple[str, DeviceState]:
+            """bmRTH: Set bottom reeler teeth count — Phase 2 param."""
+            return "", s
+        reg("BMRTH", handle_bmrth)
+
+        def handle_sktrg(s: DeviceState) -> Tuple[str, DeviceState]:
+            """SKTRG: Set skip trigger count — Phase 2 param."""
+            return "", s
+        reg("SKTRG", handle_sktrg)
+
+        # ==================================================================
+        # SEGMENT 15: TRIGGER SENSOR POWER (POS01-08 / PFS01-08)
+        # ==================================================================
+
+        for n in range(1, 9):
+            padded = f"{n:02d}"
+
+            def _make_pon(sensor_num: int):
+                def handler(s: DeviceState) -> Tuple[str, DeviceState]:
+                    ns = s.copy()
+                    ns.sensor_power[sensor_num] = True
+                    return "", ns
+                return handler
+
+            def _make_poff(sensor_num: int):
+                def handler(s: DeviceState) -> Tuple[str, DeviceState]:
+                    ns = s.copy()
+                    ns.sensor_power[sensor_num] = False
+                    return "", ns
+                return handler
+
+            reg(f"POS{padded}", _make_pon(n))
+            reg(f"PFS{padded}", _make_poff(n))
+
+        # ==================================================================
+        # SEGMENT 16: TRIGGER SENSOR ATTACH / DETACH & CHECK
+        # ==================================================================
+
+        def handle_tpats(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy()
+            ns.sensor_top.attached = True
+            ns.sensor_top.powered = True
+            return "", ns
+        reg("TPATS", handle_tpats)
+
+        def handle_tpdts(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy()
+            ns.sensor_top.attached = False
+            ns.sensor_top.powered = False
+            return "", ns
+        reg("TPDTS", handle_tpdts)
+
+        def handle_bmats(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy()
+            ns.sensor_bottom.attached = True
+            ns.sensor_bottom.powered = True
+            return "", ns
+        reg("BMATS", handle_bmats)
+
+        def handle_bmdts(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy()
+            ns.sensor_bottom.attached = False
+            ns.sensor_bottom.powered = False
+            return "", ns
+        reg("BMDTS", handle_bmdts)
+
+        def handle_tpsck(s: DeviceState) -> Tuple[str, DeviceState]:
+            """TPSCK: Check top trigger sensor state."""
+            return ("TS1" if s.sensor_top.triggered else "TS0"), s
+        reg("TPSCK", handle_tpsck)
+
+        def handle_bpsck(s: DeviceState) -> Tuple[str, DeviceState]:
+            """BPSCK: Check bottom trigger sensor state."""
+            return ("BS1" if s.sensor_bottom.triggered else "BS0"), s
+        reg("BPSCK", handle_bpsck)
+
+        # ==================================================================
+        # SEGMENT 17: LIGHT / CAMERA SEQUENCES
+        # ==================================================================
+
+        def handle_lcs01(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS01: Rack 1 Top Cam."""
+            ns = s.copy(); ns.cameras.flags[0] = True; ns.cameras.active_sequence = 1; return "", ns
+        reg("LCS01", handle_lcs01)
+
+        def handle_lcs02(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS02: Rack 1 Side Cam."""
+            ns = s.copy(); ns.cameras.flags[1] = True; ns.cameras.active_sequence = 2; return "", ns
+        reg("LCS02", handle_lcs02)
+
+        def handle_lcs03(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS03: Rack 1 Front Cam."""
+            ns = s.copy(); ns.cameras.flags[2] = True; ns.cameras.active_sequence = 3; return "", ns
+        reg("LCS03", handle_lcs03)
+
+        def handle_lcs04(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS04: Rack 1 Top Light Cam (solenoid)."""
+            ns = s.copy(); ns.cameras.flags[3] = True; ns.cameras.active_sequence = 4; return "", ns
+        reg("LCS04", handle_lcs04)
+
+        def handle_lcs05(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS05: Rack 2 Top Cam."""
+            ns = s.copy(); ns.cameras.flags[4] = True; ns.cameras.active_sequence = 5; return "", ns
+        reg("LCS05", handle_lcs05)
+
+        def handle_lcs06(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS06: Rack 2 Side Cam."""
+            ns = s.copy(); ns.cameras.flags[5] = True; ns.cameras.active_sequence = 6; return "", ns
+        reg("LCS06", handle_lcs06)
+
+        def handle_lcs07(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCS07: Rack 2 Front Cam."""
+            ns = s.copy(); ns.cameras.flags[6] = True; ns.cameras.active_sequence = 7; return "", ns
+        reg("LCS07", handle_lcs07)
+
+        def handle_lcstp(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCStp: Full top rack sequence (cameras 0-2 + 3 backlight)."""
+            ns = s.copy()
+            for i in range(4):
+                ns.cameras.flags[i] = True
+            ns.cameras.active_sequence = -1
+            return "", ns
+        reg("LCSTP", handle_lcstp)
+
+        def handle_lcsbm(s: DeviceState) -> Tuple[str, DeviceState]:
+            """LCSbm: Full bottom rack sequence (cameras 4-6)."""
+            ns = s.copy()
+            for i in range(4, 7):
+                ns.cameras.flags[i] = True
+            ns.cameras.active_sequence = -2
+            return "", ns
+        reg("LCSBM", handle_lcsbm)
+
+        # ==================================================================
+        # SEGMENT 18: LIGHT / CAMERA SEQUENCE FLAGS (Inspection Enable)
+        # ==================================================================
+
+        for cam_idx in range(7):
+            def _make_lcsi(idx: int):
+                def handler(s: DeviceState) -> Tuple[str, DeviceState]:
+                    ns = s.copy()
+                    ns.cameras.inspection_flags[idx] = True
+                    return "", ns
+                return handler
+            reg(f"LCSI{cam_idx}", _make_lcsi(cam_idx))
+
+        # ==================================================================
+        # SEGMENT 20: IET (INSPECTION EVENT TRANSITIONS)
+        # ==================================================================
+
+        def handle_iesel(s: DeviceState) -> Tuple[str, DeviceState]:
+            """IESEL: Select state — enable RUN, disable others, RUN lamp ON."""
+            ns = s.copy()
+            ns.button_flags.run = True
+            ns.button_flags.pause = False
+            ns.button_flags.stop = False
+            ns.button_flags.buzzeroff = False
+            ns.button_lamps.run = True
+            ns.button_lamps.pause = False
+            ns.button_lamps.stop = False
+            ns.button_lamps.buzzer = False
+            # Reset tower lamps
+            ns.lamps.red = False
+            ns.lamps.yellow = False
+            ns.lamps.green = False
+            ns.lamps.buzzer = False
+            return "", ns
+        reg("IESEL", handle_iesel)
+
+        def handle_ierun(s: DeviceState) -> Tuple[str, DeviceState]:
+            """IERUN: Run state — enable PAUSE+STOP, green lamp ON, solenoid ON."""
+            ns = s.copy()
+            ns.button_flags.run = False
+            ns.button_flags.pause = True
+            ns.button_flags.stop = True
+            ns.button_flags.buzzeroff = False
+            ns.lamps.green = True
+            ns.lamps.yellow = False
+            ns.lamps.red = False
+            ns.lamps.buzzer = False
+            ns.solenoid_top = True
+            return "", ns
+        reg("IERUN", handle_ierun)
+
+        def handle_iepas(s: DeviceState) -> Tuple[str, DeviceState]:
+            """IEPAS: Pass state — same as Run."""
+            ns = s.copy()
+            ns.button_flags.run = False
+            ns.button_flags.pause = True
+            ns.button_flags.stop = True
+            ns.lamps.green = True
+            ns.lamps.yellow = False
+            ns.lamps.red = False
+            ns.lamps.buzzer = False
+            return "", ns
+        reg("IEPAS", handle_iepas)
+
+        def handle_iepau(s: DeviceState) -> Tuple[str, DeviceState]:
+            """IEPAU: Pause state — enable RUN+STOP, yellow lamp, close stamping+solenoid."""
+            ns = s.copy()
+            ns.button_flags.run = True
+            ns.button_flags.pause = False
+            ns.button_flags.stop = True
+            ns.button_flags.buzzeroff = False
+            ns.lamps.green = False
+            ns.lamps.yellow = True
+            ns.lamps.red = False
+            ns.lamps.buzzer = False
+            ns.stamping_relay = False
+            ns.solenoid_top = False
+            return "", ns
+        reg("IEPAU", handle_iepau)
+
+        def handle_iefai(s: DeviceState) -> Tuple[str, DeviceState]:
+            """IEFAI: Fail state — enable BUZZEROFF only, red lamp + buzzer ON."""
+            ns = s.copy()
+            ns.button_flags.run = False
+            ns.button_flags.pause = False
+            ns.button_flags.stop = False
+            ns.button_flags.buzzeroff = True
+            ns.lamps.green = False
+            ns.lamps.yellow = False
+            ns.lamps.red = True
+            ns.lamps.buzzer = True
+            ns.stamping_relay = False
+            ns.solenoid_top = False
+            return "", ns
+        reg("IEFAI", handle_iefai)
+
+        def handle_bofdr(s: DeviceState) -> Tuple[str, DeviceState]:
+            """BOFDR: Buzzer off during run — disable RUN, enable STOP, buzzer OFF."""
+            ns = s.copy()
+            ns.button_flags.run = False
+            ns.button_flags.stop = True
+            ns.button_flags.buzzeroff = False
+            ns.lamps.buzzer = False
+            return "", ns
+        reg("BOFDR", handle_bofdr)
+
+        def handle_bofer(s: DeviceState) -> Tuple[str, DeviceState]:
+            """BOFER: Buzzer off error recovery — enable RUN+STOP, buzzer OFF."""
+            ns = s.copy()
+            ns.button_flags.run = True
+            ns.button_flags.stop = True
+            ns.button_flags.buzzeroff = False
+            ns.lamps.buzzer = False
+            return "", ns
+        reg("BOFER", handle_bofer)
+
+        def handle_iedrl(s: DeviceState) -> Tuple[str, DeviceState]:
+            """IEDRL: Door lock poka-yoke — accept silently."""
+            return "", s
+        reg("IEDRL", handle_iedrl)
+
+        def handle_dhbls(s: DeviceState) -> Tuple[str, DeviceState]:
+            """DHBLS: Full reset — disable all buttons/motors/interrupts/sensors."""
+            ns = s.copy()
+            # Disable all button flags
+            ns.button_flags.run = False
+            ns.button_flags.pause = False
+            ns.button_flags.stop = False
+            ns.button_flags.buzzeroff = False
+            ns.button_flags.doorlock = False
+            # Turn off all button lamps
+            ns.button_lamps.run = False
+            ns.button_lamps.pause = False
+            ns.button_lamps.stop = False
+            ns.button_lamps.buzzer = False
+            # Turn off all tower lamps
+            ns.lamps.red = False
+            ns.lamps.yellow = False
+            ns.lamps.green = False
+            ns.lamps.buzzer = False
+            # Stop motors
+            ns.reeler_top.running = False
+            ns.reeler_bottom.running = False
+            # Disable sensors
+            ns.sensor_top.attached = False
+            ns.sensor_top.powered = False
+            ns.sensor_bottom.attached = False
+            ns.sensor_bottom.powered = False
+            # Disable encoders
+            ns.encoder_top.enabled = False
+            ns.encoder_bottom.enabled = False
+            # Close solenoid/stamping
+            ns.solenoid_top = False
+            ns.solenoid_bottom = False
+            ns.stamping_relay = False
+            ns.winding_relay = False
+            # Reset camera flags
+            for i in range(7):
+                ns.cameras.flags[i] = False
+                ns.cameras.inspection_flags[i] = False
+            ns.cameras.active_sequence = -1
+            # Power off all sensors
+            for i in range(1, 9):
+                ns.sensor_power[i] = False
+            # Disable rejection & pressure switch
+            ns.rejection_enabled = False
+            ns.pressure_switch_enabled = False
+            return "", ns
+        reg("DHBLS", handle_dhbls)
+
+        def handle_hwbdb(s: DeviceState) -> Tuple[str, DeviceState]:
+            """HWBDB: Disable all hardware buttons, turn off all indicator lamps."""
+            ns = s.copy()
+            ns.button_flags.run = False
+            ns.button_flags.pause = False
+            ns.button_flags.stop = False
+            ns.button_flags.buzzeroff = False
+            ns.button_flags.doorlock = False
+            ns.button_lamps.run = False
+            ns.button_lamps.pause = False
+            ns.button_lamps.stop = False
+            ns.button_lamps.buzzer = False
+            return "", ns
+        reg("HWBDB", handle_hwbdb)
+
+        # ==================================================================
+        # SEGMENT 21: REFERENCE SEARCH
+        # ==================================================================
+
+        def handle_rfs01(s: DeviceState) -> Tuple[str, DeviceState]:
+            """RFS01: Top camera reference search — responds TRD01."""
+            return "TRD01", s
+        reg("RFS01", handle_rfs01)
+
+        def handle_rfs02(s: DeviceState) -> Tuple[str, DeviceState]:
+            """RFS02: Bottom camera reference search — responds TRD02."""
+            return "TRD02", s
+        reg("RFS02", handle_rfs02)
+
+        def handle_spm01(s: DeviceState) -> Tuple[str, DeviceState]:
+            """SPM01: Set top SPM delay — Phase 2 param."""
+            return "", s
+        reg("SPM01", handle_spm01)
+
+        def handle_spm02(s: DeviceState) -> Tuple[str, DeviceState]:
+            """SPM02: Set bottom SPM delay — Phase 2 param."""
+            return "", s
+        reg("SPM02", handle_spm02)
+
+        # ==================================================================
+        # SEGMENT 22: REJECTION LOGIC
+        # ==================================================================
+
+        def handle_rjenb(s: DeviceState) -> Tuple[str, DeviceState]:
+            """RJENB: Enable rejection logic."""
+            ns = s.copy()
+            ns.rejection_enabled = True
+            return "", ns
+        reg("RJENB", handle_rjenb)
+
+        # ==================================================================
+        # SEGMENT 23: I2C EXPANDER INITIALIZATION
+        # ==================================================================
+
+        def handle_i2c1(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.i2c_initialized[1] = True; return "", ns
+        reg("I2C1", handle_i2c1)
+
+        def handle_i2c2(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.i2c_initialized[2] = True; return "", ns
+        reg("I2C2", handle_i2c2)
+
+        def handle_i2c3(s: DeviceState) -> Tuple[str, DeviceState]:
+            ns = s.copy(); ns.i2c_initialized[3] = True; return "", ns
+        reg("I2C3", handle_i2c3)
+
+        # ==================================================================
+        # EMULATOR-ONLY OPCODES (UI Control Buttons)
+        # ==================================================================
+        # These are NOT part of the real hardware protocol.
+        # They exist for the dashboard UI to control emulator run state.
+
+        def handle_emrun(s: DeviceState) -> Tuple[str, DeviceState]:
+            """EMRUN: Set emulator to RUNNING."""
+            ns = s.copy()
+            ns.run_state = RunState.RUNNING
+            return "EMROK", ns
+        reg("EMRUN", handle_emrun)
+
+        def handle_empau(s: DeviceState) -> Tuple[str, DeviceState]:
+            """EMPAU: Set emulator to PAUSED."""
+            ns = s.copy()
+            ns.run_state = RunState.PAUSED
+            return "EMPOK", ns
+        reg("EMPAU", handle_empau)
+
+        def handle_emest(s: DeviceState) -> Tuple[str, DeviceState]:
+            """EMEST: Set emulator to STOPPED (renamed from EMSTP to avoid collision)."""
+            ns = s.copy()
+            ns.run_state = RunState.STOPPED
+            return "EMSOK", ns
+        reg("EMEST", handle_emest)
+
+        def handle_bzzof(s: DeviceState) -> Tuple[str, DeviceState]:
+            """BZZOF: Buzzer override (silence buzzer)."""
+            ns = s.copy()
+            ns.buzzer_override = True
+            return "BZZOK", ns
+        reg("BZZOF", handle_bzzof)

@@ -12,7 +12,7 @@ def test_handler_init():
     handler = OpcodeHandler(logger)
     
     assert handler.handlers is not None
-    assert len(handler.handlers) >= 2  # At least QUERY and STATUS
+    assert len(handler.handlers) >= 2  # At least QUERY and many real opcodes
 
 
 def test_handler_register_handler():
@@ -61,16 +61,16 @@ def test_handler_dispatch_query():
     assert new_state is state  # State unchanged
 
 
-def test_handler_dispatch_status():
-    """Test dispatching STATUS command (returns device status)."""
+def test_handler_dispatch_doorc():
+    """Test dispatching DOORC command (check door lock → responds DL1 when locked)."""
     logger = MagicMock()
     handler = OpcodeHandler(logger)
     state = DeviceState()
     
-    response, new_state = handler.dispatch("STATUS", state)
+    response, new_state = handler.dispatch("DOORC", state)
     
-    assert response == "OK"
-    assert new_state is state
+    assert response == "DL1"  # door_locked defaults to True
+    assert new_state is state  # State unchanged (read-only check)
 
 
 def test_handler_dispatch_with_state_change():
@@ -91,13 +91,13 @@ def test_handler_dispatch_with_state_change():
 
 
 def test_handler_dispatch_invalid_opcode():
-    """Test dispatch raises error for invalid opcode."""
+    """Test dispatch returns FLS for unknown opcode (matching real hardware)."""
     logger = MagicMock()
     handler = OpcodeHandler(logger)
     state = DeviceState()
     
-    with pytest.raises(KeyError):
-        handler.dispatch("XXXXX", state)
+    response, new_state = handler.dispatch("XXXXX", state)
+    assert response == "FLS"
 
 
 def test_handler_list_handlers():
@@ -108,7 +108,7 @@ def test_handler_list_handlers():
     handlers_list = handler.list_handlers()
     
     assert "QUERY" in handlers_list
-    assert "STATUS" in handlers_list
+    assert "DOORC" in handlers_list
     assert len(handlers_list) >= 2
 
 
@@ -124,16 +124,17 @@ def test_handler_built_in_query():
     assert response == "YES"
 
 
-def test_handler_built_in_status():
-    """Test built-in STATUS handler returns device status."""
+def test_handler_built_in_doorc():
+    """Test built-in DOORC handler checks door lock state."""
     logger = MagicMock()
     handler = OpcodeHandler(logger)
     state = DeviceState()
     
-    status_handler = handler.get_handler("STATUS")
-    response, _ = status_handler(state)
+    doorc_handler = handler.get_handler("DOORC")
+    response, new_state = doorc_handler(state)
     
-    assert response == "OK"
+    assert response == "DL1"  # door_locked defaults to True
+    assert new_state is state
 
 
 def test_handler_handler_signature():
@@ -185,10 +186,10 @@ def test_handler_multiple_dispatch():
     state = DeviceState()
     
     response1, _ = handler.dispatch("QUERY", state)
-    response2, _ = handler.dispatch("STATUS", state)
+    response2, new_state = handler.dispatch("DOORC", state)
     
     assert response1 == "YES"
-    assert response2 == "OK"
+    assert response2 == "DL1"
 
 
 # --- Emulator Control Opcode Handlers ---
@@ -210,8 +211,8 @@ class TestEmulatorControlHandlers:
         assert "EMPAU" in self.handler.list_handlers()
 
     def test_emstp_registered(self):
-        """EMSTP handler is registered."""
-        assert "EMSTP" in self.handler.list_handlers()
+        """EMEST handler is registered (emulator-only stop)."""
+        assert "EMEST" in self.handler.list_handlers()
 
     def test_bzzof_registered(self):
         """BZZOF handler is registered."""
@@ -231,9 +232,9 @@ class TestEmulatorControlHandlers:
         assert new_state.run_state == RunState.PAUSED
 
     def test_emstp_sets_stopped(self):
-        """EMSTP sets run_state to STOPPED and returns EMSOK."""
+        """EMEST sets run_state to STOPPED and returns EMSOK."""
         self.state.run_state = RunState.RUNNING
-        response, new_state = self.handler.dispatch("EMSTP", self.state)
+        response, new_state = self.handler.dispatch("EMEST", self.state)
         assert response == "EMSOK"
         assert new_state.run_state == RunState.STOPPED
 
@@ -255,8 +256,8 @@ class TestEmulatorControlHandlers:
         assert new_state is not self.state
 
     def test_emstp_returns_new_state(self):
-        """EMSTP returns a new state object."""
-        response, new_state = self.handler.dispatch("EMSTP", self.state)
+        """EMEST returns a new state object."""
+        response, new_state = self.handler.dispatch("EMEST", self.state)
         assert new_state is not self.state
 
     def test_bzzof_returns_new_state(self):
@@ -286,5 +287,5 @@ class TestEmulatorControlHandlers:
         _, state3 = self.handler.dispatch("EMPAU", state2)
         assert state3.run_state == RunState.PAUSED
 
-        _, state4 = self.handler.dispatch("EMSTP", state3)
+        _, state4 = self.handler.dispatch("EMEST", state3)
         assert state4.run_state == RunState.STOPPED
