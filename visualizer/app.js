@@ -293,18 +293,18 @@ function renderControlButtons(state) {
         lightPower.classList.add('active-power');
     }
 
-    // Set active light based on run_state
-    const runState = state.run_state || 'running';
-    if (runState === 'running') {
+    // Button indicator lamps driven by IET opcodes (IESEL, IERUN, IEPAU, IEFAI, etc.)
+    const bl = state.button_lamps || {};
+    if (bl.run) {
         lightRun.classList.add('active-run');
-    } else if (runState === 'paused') {
+    }
+    if (bl.pause) {
         lightPause.classList.add('active-pause');
-    } else if (runState === 'stopped') {
+    }
+    if (bl.stop) {
         lightStop.classList.add('active-stop');
     }
-
-    // Buzzer override light
-    if (state.buzzer_override) {
+    if (bl.buzzer) {
         lightBuzzer.classList.add('active-buzzer');
     }
 

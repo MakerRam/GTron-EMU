@@ -83,6 +83,7 @@ class StateExporter:
             "sag_bottom_upper": s.sag_bottom_upper,
             "sag_bottom_lower": s.sag_bottom_lower,
             "lamps": asdict(s.lamps),
+            "button_lamps": asdict(s.button_lamps),
             "camera_flags": {str(k): v for k, v in s.cameras.flags.items()},
             "door_locked": s.door_locked,
             "estop_pressed": s.estop_pressed,
