@@ -7,7 +7,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 class SerialBridge:
-    """Manages virtual COM port communication with 5-byte ASCII protocol"""
+    """Manages virtual COM port communication with 5-byte ASCII protocol.
+    
+    Uses an internal byte buffer to handle burst-send scenarios where
+    LabVIEW writes multiple opcodes back-to-back. The buffer accumulates
+    incoming bytes and extracts 5-byte frames, stripping any \\n / \\r
+    characters that may appear between frames.
+    """
     
     def __init__(self, port: str, baudrate: int = 9600, timeout: float = 1.0, bytesize: int = 8, stopbits: int = 1, parity: str = 'N', 
                  rtscts: bool = False, dsrdtr: bool = False, xonxoff: bool = False) -> None:
@@ -27,6 +33,8 @@ class SerialBridge:
         Raises:
             serial.SerialException: If port cannot be opened
         """
+        self._read_buffer = bytearray()  # Internal accumulation buffer
+        
         try:
             self._port = serial.Serial(
                 port=port, 
@@ -68,40 +76,64 @@ class SerialBridge:
         return self._port.is_open
     
     def read_command(self) -> Optional[bytes]:
-        """Read command from serial port.
+        """Read next 5-byte command from the serial port.
         
-        Reads 5-byte commands, handling optional trailing newline from LabVIEW.
-        Protocol: Expects 5-byte ASCII opcode, optionally followed by newline.
+        Uses an internal buffer to handle burst-send scenarios where
+        multiple opcodes arrive in a single OS read. Strips \\n and \\r
+        characters between frames (LabVIEW may or may not append them).
+        
+        Flow:
+          1. Drain all available bytes from the serial port into the buffer.
+          2. If buffer is still < 5 bytes, do a blocking read for the remainder.
+          3. Strip leading \\n / \\r bytes (inter-frame noise).
+          4. If >= 5 bytes available, extract and return the first 5.
+          5. Otherwise return None (timeout / incomplete).
         
         Returns:
-            5-byte command if valid, None if timeout or no complete command
+            5-byte command if a complete frame is available, None otherwise.
         """
         try:
-            # Strategy: Read exactly 5 bytes (the opcode)
-            data = self._port.read(5)
+            # Step 1: Drain all available bytes into the internal buffer
+            waiting = self._port.in_waiting
+            if waiting > 0:
+                chunk = self._port.read(waiting)
+                if chunk:
+                    self._read_buffer.extend(chunk)
             
-            if len(data) < 5:
-                # Timeout or incomplete read
-                if len(data) > 0:
-                    logger.warning(f"Incomplete read: got {len(data)} bytes, expected 5: {data}")
+            # Step 2: Strip leading newlines / carriage returns
+            while self._read_buffer and self._read_buffer[0] in (0x0A, 0x0D):
+                self._read_buffer.pop(0)
+            
+            # Step 3: If buffer still doesn't have 5 bytes, do a blocking read.
+            # Loop because the blocking read may return leading newlines that
+            # get stripped, leaving us still short of 5 bytes.
+            while len(self._read_buffer) < 5:
+                needed = 5 - len(self._read_buffer)
+                data = self._port.read(needed)
+                if not data:
+                    break  # Timeout — no more data coming
+                self._read_buffer.extend(data)
+                
+                # Strip leading newlines (the blocking read may have
+                # returned newline bytes from LabVIEW)
+                while self._read_buffer and self._read_buffer[0] in (0x0A, 0x0D):
+                    self._read_buffer.pop(0)
+            
+            # Step 4: Need at least 5 bytes for a complete frame
+            if len(self._read_buffer) < 5:
+                if len(self._read_buffer) > 0:
+                    logger.warning(
+                        f"Incomplete frame in buffer: {len(self._read_buffer)} bytes: "
+                        f"{bytes(self._read_buffer)!r}"
+                    )
                 return None
             
-            # We have exactly 5 bytes
-            logger.debug(f"Received: {data}")
+            # Step 5: Extract exactly 5 bytes
+            frame = bytes(self._read_buffer[:5])
+            del self._read_buffer[:5]
             
-            # Check if there's a trailing newline (6th byte) and consume it
-            # This prevents it from being picked up as the start of the next command
-            if self._port.in_waiting > 0:
-                next_byte = self._port.read(1)
-                if next_byte and next_byte not in (b'\n', b'\r'):
-                    # Unexpected byte after command - this might be part of next command
-                    logger.warning(f"Unexpected byte after command: {next_byte}")
-                    # Put it back by... well, we can't, so log it
-                    logger.debug(f"Note: {next_byte} consumed from buffer")
-                else:
-                    logger.debug(f"Consumed trailing newline: {next_byte}")
-            
-            return data
+            logger.debug(f"Received: {frame}")
+            return frame
             
         except Exception as e:
             logger.error(f"Error reading from serial port: {e}")
