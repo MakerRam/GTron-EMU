@@ -799,8 +799,8 @@ header h1 .logo-icon {
 .control-btn-estop { border-left: 3px solid var(--red); }
 
 .control-light {
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--off);
     flex-shrink: 0;
@@ -954,12 +954,12 @@ body.mock2-mode .cam-dot.active {
     border-color: var(--green);
 }
 
-/* Mock 2 override: bright white flash for light channel dots */
+/* Mock 2 override: green flash for light channel dots */
 body.mock2-mode .light-ch-dot.active {
-    background: #ffffff;
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.9), 0 0 4px #ffffff;
-    border-color: #ffffff;
-    animation: camera-flash 0.2s ease-out;
+    background: var(--green);
+    box-shadow: 0 0 14px rgba(52, 211, 153, 0.9), 0 0 4px var(--green);
+    border-color: var(--green);
+    animation: light-flash-green 0.2s ease-out;
 }
 
 /* Camera flash keyframe — bright burst then sustain */
@@ -967,6 +967,13 @@ body.mock2-mode .light-ch-dot.active {
     0%   { background: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 1), 0 0 8px #ffffff; transform: scale(1.3); }
     50%  { background: #ffffff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.8), 0 0 6px #ffffff; transform: scale(1.1); }
     100% { background: #ffffff; box-shadow: 0 0 14px rgba(255, 255, 255, 0.9), 0 0 4px #ffffff; transform: scale(1); }
+}
+
+/* Light channel green flash keyframe */
+@keyframes light-flash-green {
+    0%   { background: #34d399; box-shadow: 0 0 24px rgba(52, 211, 153, 1), 0 0 8px #34d399; transform: scale(1.3); }
+    50%  { background: #34d399; box-shadow: 0 0 18px rgba(52, 211, 153, 0.8), 0 0 6px #34d399; transform: scale(1.1); }
+    100% { background: #34d399; box-shadow: 0 0 14px rgba(52, 211, 153, 0.9), 0 0 4px #34d399; transform: scale(1); }
 }
 
 /* --- Command Log --- */
